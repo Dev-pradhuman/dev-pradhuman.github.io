@@ -1,0 +1,3149 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>PRADHUMAN — Portfolio Link & QR Selector</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- qrcode-generator for custom-rendered, non-slop precision matrix QR canvases -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              950: '#090A0D',
+              900: '#0E1014',
+              800: '#16181E',
+              700: '#21242C',
+            },
+            gh: {
+              bg: '#0D1117',
+              header: '#010409',
+              border: '#30363D',
+              text: '#E6EDF3',
+              muted: '#7D8590',
+              link: '#2F81F7',
+              btn: '#21262D',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg-base: #0B0C0F;
+      --grid-line: rgba(255, 255, 255, 0.026);
+      --glass-bg: rgba(18, 20, 25, 0.78);
+      --glass-border: rgba(255, 255, 255, 0.085);
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-base);
+      color: #F3F4F6;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    /* =====================================================================
+       1. INTERACTIVE STARRY CURSOR-GLOW & HORIZON CANVAS
+       ===================================================================== */
+    #starfield {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Architectural Cross-Hairline Grid */
+    .portfolio-grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+      background-size: 25vw 22vh;
+      background-position: center center;
+    }
+
+    /* Subtle Center Axis Hairlines */
+    .portfolio-axis-lines {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .portfolio-axis-lines::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 55%;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.045) 20%, rgba(255,255,255,0.045) 80%, transparent);
+    }
+    .portfolio-axis-lines::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 28%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.04) 15%, rgba(255,255,255,0.04) 85%, transparent);
+    }
+
+    /* Fine Analog Film Grain */
+    .film-grain {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* =====================================================================
+       2. FLOATING GLASS NAVIGATION & MECHANICAL KEYCAPS
+       ===================================================================== */
+    .glass-dock {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .keycap-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.03);
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 11px;
+      color: #F3F4F6;
+      box-shadow: 0 2px 0 rgba(255, 255, 255, 0.12);
+      transition: all 0.15s ease;
+    }
+    .keycap-group:hover .keycap-box {
+      border-color: rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
+    }
+
+    /* =====================================================================
+       3. LEFT WHEEL: LIVE DESTINATION PAGE PREVIEW WINDOWS
+       ===================================================================== */
+    .wheel-stage {
+      perspective: 1500px;
+      transform-style: preserve-3d;
+    }
+
+    .preview-window-card {
+      position: absolute;
+      width: 468px;
+      height: 294px;
+      border-radius: 16px;
+      background-color: #0D1117;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow:
+        0 34px 75px -15px rgba(0, 0, 0, 0.92),
+        0 0 0 1px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+      will-change: transform, opacity;
+      transform-style: preserve-3d;
+      cursor: pointer;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .preview-window-card:hover {
+      border-color: rgba(255, 255, 255, 0.32);
+      box-shadow:
+        0 40px 85px -12px rgba(0, 0, 0, 0.96),
+        0 0 28px rgba(88, 166, 255, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+
+    /* Subtle glass screen reflection across the preview card */
+    .preview-window-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(125deg, rgba(255,255,255,0.05) 0%, transparent 42%, rgba(0,0,0,0.18) 100%);
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* Samurai PFP styling inside preview cards */
+    .samurai-avatar-crop {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 42%;
+      transform: scale(1.35);
+      filter: contrast(1.08) saturate(1.05);
+    }
+    .samurai-avatar-custom {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+    }
+
+    /* =====================================================================
+       4. RIGHT WHEEL: PRECISION MACHINED HARDWARE QR BEZELS (NO AI SLOP)
+       ===================================================================== */
+    .hardware-qr-tile {
+      position: absolute;
+      width: 232px;
+      height: 232px;
+      border-radius: 26px;
+      /* CNC Anodized Obsidian Aluminum Outer Chassis with subtle 1px specular edge */
+      background: linear-gradient(145deg, #21242D 0%, #121419 52%, #0B0C0F 100%);
+      box-shadow:
+        0 30px 65px -12px rgba(0, 0, 0, 0.92),
+        -1px -1px 0 0.5px rgba(148, 163, 184, 0.24),
+        1px 1px 0 0.5px rgba(56, 189, 248, 0.16),
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.12),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.9);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      will-change: transform, opacity;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .hardware-qr-tile:hover {
+      box-shadow:
+        0 34px 75px -10px rgba(0, 0, 0, 0.96),
+        -1px -1px 0 1px rgba(147, 197, 253, 0.45),
+        1px 1px 0 1px rgba(251, 191, 36, 0.32),
+        inset 0 1.5px 3px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Recessed Inner Optical Matrix Well */
+    .hardware-qr-well {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 17px;
+      background: #0C0E12;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow:
+        inset 0 4px 12px rgba(0, 0, 0, 0.95),
+        0 1px 0 rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      overflow: hidden;
+    }
+
+    .hardware-qr-well.light-plate {
+      background: #EAE8E3;
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.18);
+    }
+
+    /* Responsive scaling for tablet and mobile */
+    @media (max-width: 1150px) {
+      .preview-window-card {
+        width: 360px;
+        height: 226px;
+      }
+      . preview-scale-inner {
+        transform: scale(0.769);
+        transform-origin: top left;
+        width: 468px;
+        height: 294px;
+      }
+      .hardware-qr-tile {
+        width: 184px;
+        height: 184px;
+        padding: 12px;
+        border-radius: 22px;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .preview-window-card {
+        width: 308px;
+        height: 193px;
+      }
+      .preview-scale-inner {
+        transform: scale(0.658);
+        transform-origin: top left;
+        width: 468px;
+        height: 294px;
+      }
+      .hardware-qr-tile {
+        width: 142px;
+        height: 142px;
+        padding: 9px;
+        border-radius: 18px;
+      }
+      .hardware-qr-well {
+        border-radius: 12px;
+        padding: 6px;
+      }
+    }
+
+    /* Action Pill Button ("View project" style from portfolio) */
+    .portfolio-action-btn {
+      background: rgba(30, 33, 40, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      color: #E5E7EB;
+      border-radius: 8px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+    .portfolio-action-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.28);
+      color: #FFFFFF;
+      transform: translateY(-1px);
+    }
+
+    .portfolio-tag-pill {
+      background: rgba(26, 28, 34, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.075);
+      color: #9CA3AF;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="relative select-none">
+
+  <!-- ===================================================================== -->
+  <!-- 1. INTERACTIVE STARFIELD & CURSOR-GLOW HORIZON CANVAS                 -->
+  <!-- ===================================================================== -->
+  <canvas id="starfield"></canvas>
+  <div class="portfolio-grid-overlay"></div>
+  <div class="portfolio-axis-lines"></div>
+  <div class="film-grain"></div>
+
+  <!-- Hidden File Input for Instant Samurai PFP Swap -->
+  <input
+    type="file"
+    id="quick-pfp-upload"
+    accept="image/*"
+    class="hidden"
+    onchange="handlePfpFileUpload(event)"
+  />
+
+  <!-- Hidden File Input for Custom Card Screenshot Override -->
+  <input
+    type="file"
+    id="custom-card-preview-upload"
+    accept="image/*"
+    class="hidden"
+    onchange="handleCardScreenshotUpload(event)"
+  />
+
+  <!-- ===================================================================== -->
+  <!-- 2. TOP MICRO-TELEMETRY BAR & FLOATING HEADER NAVIGATION               -->
+  <!-- ===================================================================== -->
+  <header class="fixed top-0 left-0 right-0 z-30 pointer-events-none">
+    <!-- Top-Left Micro Telemetry -->
+    <div class="px-3 sm:px-5 pt-1.5 flex items-center justify-between text-[9px] font-mono tracking-wider text-zinc-500 uppercase">
+      <div class="flex items-center gap-3 sm:gap-4 bg-black/35 px-2.5 py-0.5 rounded backdrop-blur-sm border border-white/[0.04]">
+        <span>IST <strong id="telemetry-clock" class="text-zinc-300 font-normal">12:23</strong> GMT+5:30</span>
+        <span class="hidden sm:inline">FPS <strong id="telemetry-fps" class="text-zinc-300 font-normal">60</strong></span>
+        <span>PRESENCE <strong class="text-emerald-400 font-normal">ON</strong></span>
+        <span class="hidden md:inline">Availability <strong class="text-zinc-200 font-normal">NOW</strong></span>
+      </div>
+      <div class="hidden sm:flex items-center gap-2 text-[9px] text-zinc-500">
+        <span>STARFIELD // INTERACTIVE</span>
+        <span>•</span>
+        <span id="telemetry-wheel-pos">WHEEL 01/03</span>
+      </div>
+    </div>
+
+    <!-- Main Floating Header Row -->
+    <div class="px-4 sm:px-7 pt-2.5 flex items-center justify-between">
+      <!-- Left: Mechanical Keycap Logo [ P ][ O ] -->
+      <button
+        onclick="scrollToIndex(0)"
+        class="pointer-events-auto keycap-group flex items-center gap-1 focus:outline-none"
+        title="Reset Wheel to N°01"
+      >
+        <span class="keycap-box !rounded-full">P</span>
+        <span class="keycap-box">O</span>
+      </button>
+
+      <!-- Center: Floating Glass Navigation Dock + [⌘K] Keycap -->
+      <div class="pointer-events-auto flex items-center gap-1.5">
+        <nav class="glass-dock px-1.5 py-1 rounded-xl flex items-center gap-0.5 sm:gap-1 text-xs">
+          <button
+            id="nav-selector"
+            onclick="switchMode('selector')"
+            class="px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-white bg-white/10"
+          >
+            Selector
+          </button>
+          <button
+            id="nav-qrcodes"
+            onclick="switchMode('qrcodes')"
+            class="px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-zinc-400 hover:text-zinc-100"
+          >
+            All QR Codes
+          </button>
+          <button
+            id="nav-directory"
+            onclick="switchMode('directory')"
+            class="px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-zinc-400 hover:text-zinc-100"
+          >
+            Directory
+          </button>
+          <button
+            id="nav-customize"
+            onclick="openEditorModal()"
+            class="px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-zinc-400 hover:text-zinc-100 hidden sm:inline-block"
+          >
+            Customize
+          </button>
+        </nav>
+
+        <button
+          onclick="openCommandPalette()"
+          class="glass-dock px-2.5 py-1.5 rounded-xl text-xs font-mono text-zinc-300 hover:text-white hover:border-white/25 transition flex items-center gap-1"
+          title="Open Quick Command & QR Palette (⌘K)"
+        >
+          <span>⌘K</span>
+        </button>
+      </div>
+
+      <!-- Right: Hardware Controls Pill (QR Contrast Toggle, Audio Tick, PFP Upload) -->
+      <div class="pointer-events-auto flex items-center gap-1.5">
+        <!-- Toggle Stealth Dark Matrix vs Paper Contrast QR -->
+        <button
+          id="qr-tile-mode-btn"
+          onclick="toggleQrContrastMode()"
+          class="glass-dock px-2.5 py-1.5 rounded-xl text-[11px] font-mono text-zinc-300 hover:text-white transition flex items-center gap-1.5"
+          title="Switch QR Matrix between Stealth Dark Etch and Light Paper Contrast"
+        >
+          <span id="qr-mode-dot" class="w-2 h-2 rounded-full bg-sky-400"></span>
+          <span id="qr-tile-mode-label" class="hidden md:inline">Dark Matrix</span>
+        </button>
+
+        <div class="glass-dock p-1 rounded-xl flex items-center gap-0.5">
+          <!-- Audio Tick Toggle -->
+          <button
+            id="sound-toggle-btn"
+            onclick="toggleSound()"
+            class="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/10 transition"
+            title="Toggle Mechanical Wheel Scroll Sound"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+            </svg>
+          </button>
+
+          <!-- Upload PFP Button -->
+          <button
+            onclick="triggerQuickPfpUpload()"
+            class="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition"
+            title="Change Samurai Portrait Image (PFP)"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+          </button>
+
+          <!-- Master Hub QR Button -->
+          <button
+            onclick="openPageQRModal()"
+            class="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-300 hover:text-white hover:bg-white/10 transition"
+            title="Open Master Website QR Code"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- 3A. PRIMARY VIEW: DUAL-WHEEL SCROLL ANIMATION SELECTOR                -->
+  <!-- ===================================================================== -->
+  <main
+    id="view-selector"
+    class="relative z-10 w-full h-screen overflow-hidden flex items-center justify-center wheel-stage"
+  >
+    <!-- LEFT ARC WHEEL CONTAINER (Live Destination Page Previews: GitHub, IG, WhatsApp) -->
+    <div
+      id="left-wheel-container"
+      class="absolute inset-0 pointer-events-none flex items-center justify-center"
+    ></div>
+
+    <!-- RIGHT ARC WHEEL CONTAINER (Machined Obsidian Hardware QR Matrix Bezels) -->
+    <div
+      id="right-wheel-container"
+      class="absolute inset-0 pointer-events-none flex items-center justify-center"
+    ></div>
+
+    <!-- CENTER ACTIVE APP SELECTOR READOUT -->
+    <div
+      id="center-selector-info"
+      class="relative z-20 flex flex-col items-center text-center px-4 pointer-events-auto transition-transform duration-150"
+    >
+      <!-- Counter: N°01 / 03 -->
+      <div
+        id="active-counter"
+        class="text-[11px] font-mono tracking-[0.16em] text-zinc-400 mb-1.5"
+      >
+        N°01 / 03
+      </div>
+
+      <!-- Platform Display Title -->
+      <h1
+        id="active-title"
+        class="text-4xl sm:text-5xl md:text-[52px] font-semibold tracking-tight text-white leading-none mb-3.5 select-text"
+      >
+        GitHub
+      </h1>
+
+      <!-- Metadata Pills: W/GITHUB  2026 -->
+      <div class="flex items-center justify-center gap-1.5 mb-3 flex-wrap">
+        <span id="active-tag-pill" class="portfolio-tag-pill uppercase">
+          W/GITHUB
+        </span>
+        <span id="active-year-pill" class="portfolio-tag-pill">
+          2026
+        </span>
+      </div>
+
+      <!-- Handle Subtitle -->
+      <p
+        id="active-handle"
+        class="text-xs font-mono text-zinc-400 mb-5 tracking-wide select-text"
+      >
+        @dev-pradhuman
+      </p>
+
+      <!-- Action Buttons ("View project" style from portfolio) -->
+      <div class="flex items-center justify-center gap-2">
+        <a
+          id="active-open-btn"
+          href="https://github.com/dev-pradhuman"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="portfolio-action-btn px-4 py-2 text-xs font-medium flex items-center gap-1.5"
+        >
+          <span id="active-cta-text">View profile</span>
+          <span class="text-zinc-400 text-[11px]">↗</span>
+        </a>
+
+        <button
+          id="active-qr-btn"
+          onclick="openActiveQRModal()"
+          class="portfolio-action-btn px-3.5 py-2 text-xs font-medium flex items-center gap-1.5"
+          title="Inspect & Download High-Res QR Matrix"
+        >
+          <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+          </svg>
+          <span>QR Matrix</span>
+        </button>
+
+        <button
+          id="active-copy-btn"
+          onclick="copyActiveLink()"
+          class="portfolio-action-btn px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white"
+          title="Copy Channel URL"
+        >
+          Copy
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Wheel Scroll Indicator & Quick Stepper Controls -->
+    <div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 pointer-events-auto">
+      <button
+        onclick="stepWheel(-1)"
+        class="glass-dock w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white transition"
+        title="Previous Destination (Up Arrow)"
+      >
+        ↑
+      </button>
+
+      <div class="glass-dock px-3.5 py-1.5 rounded-xl flex items-center gap-3">
+        <div id="wheel-dots" class="flex items-center gap-1.5"></div>
+        <span class="text-[10px] font-mono tracking-widest uppercase text-zinc-400 hidden sm:inline">
+          SCROLL / DRAG WHEEL
+        </span>
+      </div>
+
+      <button
+        onclick="stepWheel(1)"
+        class="glass-dock w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white transition"
+        title="Next Destination (Down Arrow)"
+      >
+        ↓
+      </button>
+    </div>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- 3B. SECONDARY VIEW: ALL QR CODES HUB (SIDE-BY-SIDE SCANNABLE GRID)    -->
+  <!-- ===================================================================== -->
+  <section
+    id="view-qrcodes"
+    class="relative z-20 hidden w-full h-screen pt-24 pb-16 px-4 sm:px-8 overflow-y-auto custom-scroll"
+  >
+    <div class="max-w-5xl mx-auto">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-5 border-b border-white/10">
+        <div>
+          <p class="text-[11px] font-mono tracking-[0.2em] uppercase text-sky-400 mb-1">
+            PRECISION OPTICAL MATRIX // ALL CHANNELS
+          </p>
+          <h2 class="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
+            Hardware QR Code Index
+          </h2>
+          <p class="text-xs text-zinc-400 mt-1">
+            Custom-rendered vector matrix QR codes for every destination. Click any bezel to enlarge or export PNG.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            onclick="toggleQrContrastMode()"
+            class="portfolio-action-btn px-3.5 py-2 text-xs font-mono text-zinc-300"
+          >
+            Toggle Contrast
+          </button>
+          <button
+            onclick="openPageQRModal()"
+            class="portfolio-action-btn px-3.5 py-2 text-xs font-medium"
+          >
+            Master Hub QR
+          </button>
+          <button
+            onclick="switchMode('selector')"
+            class="portfolio-action-btn px-3.5 py-2 text-xs font-mono text-zinc-300"
+          >
+            ← Back to Wheel
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid of All Scannable QR Cards -->
+      <div id="all-qr-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- 3C. TERTIARY VIEW: MINIMALIST DIRECTORY LIST                          -->
+  <!-- ===================================================================== -->
+  <section
+    id="view-directory"
+    class="relative z-20 hidden w-full h-screen pt-24 pb-16 px-4 sm:px-8 overflow-y-auto custom-scroll"
+  >
+    <div class="max-w-2xl mx-auto">
+      <div class="glass-dock p-6 rounded-2xl mb-6 flex flex-col sm:flex-row items-center gap-5">
+        <div
+          onclick="triggerQuickPfpUpload()"
+          class="w-20 h-20 rounded-full overflow-hidden border border-white/20 shrink-0 cursor-pointer relative group"
+          title="Click to change Samurai PFP"
+        >
+          <img
+            id="directory-pfp-img"
+            src="https://i.ytimg.com/vi/kW4Udb4-jcU/hqdefault.jpg"
+            alt="Pradhuman"
+            class="samurai-avatar-crop"
+          />
+        </div>
+        <div class="text-center sm:text-left flex-1">
+          <div class="flex items-center justify-center sm:justify-start gap-2 mb-1">
+            <span class="portfolio-tag-pill">DEV-PRADHUMAN // 2026</span>
+            <span class="portfolio-tag-pill text-emerald-400">● PRO</span>
+          </div>
+          <h2 class="text-2xl font-semibold text-white">Pradhuman</h2>
+          <p class="text-xs text-zinc-400 mt-1">
+            Software × AI × Mechanical engineer · C++ Game Engines · AI-developer
+          </p>
+        </div>
+        <div class="flex sm:flex-col gap-2">
+          <button
+            onclick="downloadVCard()"
+            class="portfolio-action-btn px-3 py-1.5 text-xs font-mono"
+          >
+            + Save .VCF
+          </button>
+          <button
+            onclick="openEditorModal()"
+            class="portfolio-action-btn px-3 py-1.5 text-xs font-mono text-sky-400"
+          >
+            + Edit Links
+          </button>
+        </div>
+      </div>
+
+      <div id="directory-list-container" class="space-y-3"></div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: ENLARGED CHANNEL QR MATRIX & PNG EXPORT                      -->
+  <!-- ===================================================================== -->
+  <div
+    id="qr-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+  >
+    <div class="w-full max-w-sm glass-dock rounded-2xl p-6 border border-white/15 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+        <span id="modal-index-tag" class="text-[10px] font-mono tracking-widest uppercase text-sky-400">
+          N°01 // HARDWARE QR MATRIX
+        </span>
+        <button
+          onclick="closeQRModal()"
+          class="text-xs font-mono text-zinc-400 hover:text-white"
+        >
+          [ ESC ]
+        </button>
+      </div>
+
+      <div class="flex flex-col items-center text-center">
+        <h3 id="modal-title" class="text-2xl font-semibold text-white">GitHub</h3>
+        <p id="modal-subtitle" class="text-xs font-mono text-zinc-400 mt-0.5 mb-5">@dev-pradhuman</p>
+
+        <!-- Precision Machined QR Well inside Modal -->
+        <div class="p-3.5 rounded-2xl bg-gradient-to-b from-[#20232B] to-[#0E1014] border border-white/15 shadow-2xl mb-4">
+          <div id="modal-qr-well" class="p-3 rounded-xl bg-[#0B0D11] border border-white/10">
+            <canvas id="modal-qr-canvas" class="w-52 h-52 block rounded-lg"></canvas>
+          </div>
+        </div>
+
+        <p id="modal-url-display" class="text-[10px] font-mono text-zinc-400 bg-black/40 px-3 py-1.5 rounded-lg border border-white/5 truncate w-full mb-5"></p>
+
+        <div class="grid grid-cols-2 gap-2.5 w-full mb-2.5">
+          <button
+            id="modal-copy-btn"
+            class="portfolio-action-btn py-2.5 px-3 text-xs font-medium"
+          >
+            Copy Link
+          </button>
+          <button
+            id="modal-download-btn"
+            class="portfolio-action-btn py-2.5 px-3 text-xs font-medium text-sky-400 border-sky-500/30"
+          >
+            Download PNG
+          </button>
+        </div>
+
+        <a
+          id="modal-open-link"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="w-full py-2.5 px-4 rounded-lg bg-white text-black hover:bg-zinc-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+        >
+          <span>Open Destination Page</span>
+          <span>↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: MASTER HUB QR SEAL                                           -->
+  <!-- ===================================================================== -->
+  <div
+    id="page-qr-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+  >
+    <div class="w-full max-w-md glass-dock rounded-2xl p-6 border border-white/15 shadow-2xl">
+      <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+        <span class="text-[10px] font-mono tracking-widest uppercase text-zinc-300">
+          MASTER PORTFOLIO HUB // QR
+        </span>
+        <button
+          onclick="closePageQRModal()"
+          class="text-xs font-mono text-zinc-400 hover:text-white"
+        >
+          [ ESC ]
+        </button>
+      </div>
+
+      <div class="flex flex-col items-center text-center">
+        <h3 class="text-2xl font-semibold text-white">Master Hub QR Matrix</h3>
+        <p class="text-xs text-zinc-400 mt-1 mb-5">
+          Scan to open this interactive wheel hub on any phone.
+        </p>
+
+        <div class="p-3.5 rounded-2xl bg-gradient-to-b from-[#20232B] to-[#0E1014] border border-white/15 shadow-2xl mb-5">
+          <div class="p-3 rounded-xl bg-[#0B0D11] border border-white/10">
+            <canvas id="page-qr-canvas" class="w-52 h-52 block rounded-lg"></canvas>
+          </div>
+        </div>
+
+        <div class="w-full text-left mb-5">
+          <label class="block text-[10px] font-mono uppercase text-zinc-400 mb-1.5">
+            Hosted Hub URL (Editable for Custom Domain)
+          </label>
+          <input
+            id="page-url-input"
+            type="url"
+            oninput="updatePageQRCode(this.value)"
+            placeholder="https://github.com/dev-pradhuman"
+            class="w-full px-3 py-2 rounded-lg bg-black/50 border border-white/10 text-xs font-mono text-white focus:outline-none focus:border-white/30"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 w-full">
+          <button
+            onclick="copyText(document.getElementById('page-url-input').value, 'Hub URL Copied')"
+            class="portfolio-action-btn py-2.5 px-4 text-xs font-medium"
+          >
+            Copy Hub URL
+          </button>
+          <button
+            onclick="downloadBrandedQR('Pradhuman', 'MASTER HUB // 2026', document.getElementById('page-url-input').value, 'pradhuman-master-qr.png')"
+            class="py-2.5 px-4 rounded-lg bg-white text-black hover:bg-zinc-200 text-xs font-semibold transition"
+          >
+            Export PNG Card
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: COMMAND PALETTE (⌘K)                                         -->
+  <!-- ===================================================================== -->
+  <div
+    id="cmd-modal"
+    class="fixed inset-0 z-50 hidden items-start justify-center pt-20 p-4 bg-black/75 backdrop-blur-md"
+  >
+    <div class="w-full max-w-lg glass-dock rounded-2xl border border-white/15 shadow-2xl overflow-hidden">
+      <div class="px-4 py-3 border-b border-white/10 flex items-center gap-3">
+        <span class="text-xs font-mono text-zinc-400">⌘K</span>
+        <input
+          id="cmd-search-input"
+          type="text"
+          oninput="renderCommandItems(this.value)"
+          placeholder="Jump to destination preview, inspect QR, or run action..."
+          class="w-full bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none"
+        />
+        <button onclick="closeCommandPalette()" class="text-[10px] font-mono text-zinc-400 hover:text-white">ESC</button>
+      </div>
+      <div id="cmd-items-list" class="max-h-80 overflow-y-auto p-2 space-y-1 custom-scroll"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 4: LIVE LINK, SCREENSHOT & SAMURAI PFP CUSTOMIZER               -->
+  <!-- ===================================================================== -->
+  <div
+    id="editor-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md"
+  >
+    <div class="w-full max-w-2xl max-h-[90vh] flex flex-col glass-dock rounded-2xl border border-white/15 shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-semibold text-white tracking-wide">
+            Customize Wheel Destinations, Screenshots & Samurai PFP
+          </h3>
+          <p class="text-xs text-zinc-400 mt-0.5">
+            Add or reorder social apps, upload custom page screenshots for any left-wheel card, or update your PFP.
+          </p>
+        </div>
+        <button onclick="closeEditorModal()" class="text-xs font-mono text-zinc-400 hover:text-white">[ CLOSE ]</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 custom-scroll">
+        <!-- PFP Uploader -->
+        <div class="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono uppercase text-sky-400">01 // Samurai Avatar (Used Across Preview Cards)</span>
+            <button
+              type="button"
+              onclick="resetDefaultPfp()"
+              class="text-[11px] font-mono text-zinc-400 hover:text-white underline"
+            >
+              Restore Default Samurai Scroll
+            </button>
+          </div>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <button
+              type="button"
+              onclick="triggerQuickPfpUpload()"
+              class="portfolio-action-btn px-4 py-2 text-xs font-medium shrink-0 text-white"
+            >
+              Upload Avatar from Device
+            </button>
+            <input
+              id="editor-pfp-url-input"
+              type="text"
+              placeholder="Or paste image URL..."
+              onchange="updatePfpFromUrl(this.value)"
+              class="flex-1 px-3 py-2 rounded-lg bg-black/50 border border-white/10 text-xs text-white focus:outline-none focus:border-white/30"
+            />
+          </div>
+        </div>
+
+        <!-- Add / Edit Social App Form -->
+        <form id="link-editor-form" onsubmit="handleSaveLink(event)" class="p-4 rounded-xl bg-black/40 border border-white/10 space-y-4">
+          <div class="flex items-center justify-between">
+            <span id="form-mode-title" class="text-xs font-mono uppercase text-zinc-200">
+              02 // + Add Social Destination to Wheel
+            </span>
+            <button
+              type="button"
+              id="cancel-edit-btn"
+              onclick="resetEditorForm()"
+              class="hidden text-xs font-mono text-zinc-400 hover:text-white underline"
+            >
+              Cancel Edit
+            </button>
+          </div>
+
+          <input type="hidden" id="edit-link-index" value="-1" />
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[10px] font-mono uppercase text-zinc-400 mb-1">Platform</label>
+              <select
+                id="input-platform"
+                onchange="applyPlatformPreset(this.value)"
+                class="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-white/10 text-xs text-white focus:outline-none"
+              >
+                <option value="github">GitHub</option>
+                <option value="instagram">Instagram</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="twitter">X / Twitter</option>
+                <option value="youtube">YouTube</option>
+                <option value="website">Website / Portfolio</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-mono uppercase text-zinc-400 mb-1">Title *</label>
+              <input
+                id="input-title"
+                type="text"
+                required
+                placeholder="e.g. GitHub"
+                class="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-white/10 text-xs text-white focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-mono uppercase text-zinc-400 mb-1">Handle / Number *</label>
+              <input
+                id="input-subtitle"
+                type="text"
+                required
+                placeholder="e.g. @dev-pradhuman"
+                class="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-white/10 text-xs text-white focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-[10px] font-mono uppercase text-zinc-400 mb-1">URL *</label>
+              <input
+                id="input-url"
+                type="url"
+                required
+                placeholder="https://..."
+                class="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-white/10 text-xs text-white focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-mono uppercase text-zinc-400 mb-1">Tag Code</label>
+              <input
+                id="input-badge"
+                type="text"
+                placeholder="e.g. W/GITHUB"
+                class="w-full px-3 py-2 rounded-lg bg-zinc-900 border border-white/10 text-xs text-white focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center pt-1">
+            <button
+              type="button"
+              onclick="addLinkedInPreset()"
+              class="text-[11px] font-mono text-sky-400 hover:underline"
+            >
+              + Quick-Add Your LinkedIn (in/pradhuman-sharma-5208342b6)
+            </button>
+            <button
+              type="submit"
+              id="submit-link-btn"
+              class="px-5 py-2 rounded-lg bg-white text-black hover:bg-zinc-200 text-xs font-semibold transition"
+            >
+              Save to Wheel
+            </button>
+          </div>
+        </form>
+
+        <!-- Current Links List -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <span class="text-xs font-mono uppercase text-zinc-400">Active Wheel Destinations (Can Upload Custom Screenshot Per Card)</span>
+            <button
+              onclick="resetToDefaultLinks()"
+              class="text-[11px] font-mono text-zinc-400 hover:text-rose-400 transition"
+            >
+              Reset to Default 3 Links
+            </button>
+          </div>
+          <div id="editor-links-list" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-white/10 bg-black/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <span class="text-[11px] font-mono text-zinc-400">Export ready for GitHub Pages / Vercel</span>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onclick="copyUpdatedLinksCode()"
+            class="flex-1 sm:flex-initial portfolio-action-btn px-4 py-2 text-xs font-mono"
+          >
+            Copy LINKS JSON
+          </button>
+          <button
+            onclick="downloadUpdatedHTMLFile()"
+            class="flex-1 sm:flex-initial px-4 py-2 rounded-lg bg-white text-black hover:bg-zinc-200 text-xs font-semibold transition"
+          >
+            Download Updated HTML
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div
+    id="toast"
+    class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-2 transition-all duration-200"
+  >
+    <div class="glass-dock px-4 py-2 rounded-xl text-xs font-mono text-white flex items-center gap-2 border border-white/20">
+      <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+      <span id="toast-message">Copied to clipboard</span>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- APPLICATION LOGIC, STARFIELD ENGINE & DESTINATION PREVIEW RENDERER    -->
+  <!-- ===================================================================== -->
+  <script>
+    /**
+     * =====================================================================
+     * 1. USER PROFILE & LINKS CONFIGURATION
+     * =====================================================================
+     */
+    const DEFAULT_PFP_URL = 'https://i.ytimg.com/vi/kW4Udb4-jcU/hqdefault.jpg';
+
+    let PROFILE_CONFIG = {
+      name: 'Pradhuman',
+      handle: 'Dev-pradhuman',
+      pronouns: 'he/him',
+      bio: 'Software × AI × Mechanical engineer · C++ Game Engines · AI-developer',
+      linkedin: 'in/pradhuman-sharma-5208342b6',
+      location: 'Gurugram / India',
+      year: '2026',
+      phone: '+919625935401',
+      defaultHubUrl: 'https://github.com/dev-pradhuman',
+      pfpUrl: DEFAULT_PFP_URL,
+      isCustomCrop: false
+    };
+
+    const LINKS = [
+      {
+        id: 'github',
+        platform: 'github',
+        title: 'GitHub',
+        subtitle: '@dev-pradhuman',
+        url: 'https://github.com/dev-pradhuman',
+        badge: 'W/GITHUB',
+        year: '2026',
+        customPreviewUrl: ''
+      },
+      {
+        id: 'instagram',
+        platform: 'instagram',
+        title: 'Instagram',
+        subtitle: '@just__pradhuman',
+        url: 'https://www.instagram.com/just__pradhuman',
+        badge: 'W/INSTAGRAM',
+        year: '2026',
+        customPreviewUrl: ''
+      },
+      {
+        id: 'whatsapp',
+        platform: 'whatsapp',
+        title: 'WhatsApp',
+        subtitle: '+91 96259 35401',
+        url: 'https://wa.me/919625935401',
+        badge: 'W/WHATSAPP',
+        year: '2026',
+        customPreviewUrl: ''
+      }
+    ];
+
+    /**
+     * =====================================================================
+     * 2. VECTOR PLATFORM GLYPHS
+     * =====================================================================
+     */
+    const PLATFORM_GLYPHS = {
+      github: `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>`,
+      instagram: `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`,
+      whatsapp: `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.124.556 4.119 1.528 5.847l-1.528 5.581 5.714-1.499c1.682.912 3.61 1.435 5.664 1.435 6.627 0 12-5.373 12-12s-5.373-12-11.378-11.364z"/></svg>`,
+      linkedin: `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>`,
+      twitter: `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+      youtube: `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
+      website: `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582"/></svg>`
+    };
+
+    /**
+     * =====================================================================
+     * 3. STATE, PERSISTENCE & SOUND ENGINE
+     * =====================================================================
+     */
+    const LINKS_STORAGE_KEY = 'pradhuman_wheel_links_v4';
+    const PFP_STORAGE_KEY = 'pradhuman_wheel_pfp_v4';
+
+    let activeLinks = [];
+    let currentMode = 'selector';
+    let qrPaperContrastMode = false; // false = Stealth Dark Matrix (default), true = Light Paper Contrast
+    let soundEnabled = true;
+    let audioCtx = null;
+    let pendingScreenshotCardIdx = -1;
+
+    // Dual-Wheel Physics State
+    let wheelTarget = 0;
+    let wheelCurrent = 0;
+    let lastActiveIndex = 0;
+    let pointerX = 0;
+    let pointerY = 0;
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(LINKS_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            activeLinks = parsed;
+          }
+        }
+      } catch (e) {}
+
+      if (!activeLinks.length) {
+        activeLinks = JSON.parse(JSON.stringify(LINKS));
+      }
+
+      try {
+        const savedPfp = localStorage.getItem(PFP_STORAGE_KEY);
+        if (savedPfp) {
+          const parsedPfp = JSON.parse(savedPfp);
+          if (parsedPfp && parsedPfp.url) {
+            PROFILE_CONFIG.pfpUrl = parsedPfp.url;
+            PROFILE_CONFIG.isCustomCrop = !!parsedPfp.isCustomCrop;
+          }
+        }
+      } catch (e) {}
+    }
+
+    function saveLinksToStorage() {
+      try {
+        localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(activeLinks));
+      } catch (e) {}
+    }
+
+    function savePfpToStorage(url, isCustomCrop) {
+      PROFILE_CONFIG.pfpUrl = url;
+      PROFILE_CONFIG.isCustomCrop = isCustomCrop;
+      try {
+        localStorage.setItem(PFP_STORAGE_KEY, JSON.stringify({ url, isCustomCrop }));
+      } catch (e) {}
+    }
+
+    function playWheelTick() {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(145, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(44, audioCtx.currentTime + 0.026);
+
+        gain.gain.setValueAtTime(0.055, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.026);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.028);
+      } catch (e) {}
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('sound-toggle-btn');
+      btn.style.opacity = soundEnabled ? '1' : '0.4';
+      showToast(soundEnabled ? 'Wheel Haptic Audio: ON' : 'Wheel Haptic Audio: MUTED');
+      if (soundEnabled) playWheelTick();
+    }
+
+    /**
+     * =====================================================================
+     * 4. INTERACTIVE STARFIELD & CURSOR-GLOW HORIZON ENGINE
+     * =====================================================================
+     */
+    const starfieldState = {
+      stars: [],
+      mouseX: -1000,
+      mouseY: -1000,
+      smoothX: -1000,
+      smoothY: -1000,
+      width: 0,
+      height: 0
+    };
+
+    function initStarfieldCanvas() {
+      const canvas = document.getElementById('starfield');
+      if (!canvas) return;
+
+      function rebuildStars() {
+        const w = (canvas.width = starfieldState.width = window.innerWidth);
+        const h = (canvas.height = starfieldState.height = window.innerHeight);
+
+        const count = Math.min(340, Math.max(180, Math.floor((w * h) / 4800)));
+        starfieldState.stars = [];
+
+        for (let i = 0; i < count; i++) {
+          // Place most stars above the mountain ridge (top 80% of screen)
+          const yBias = Math.pow(Math.random(), 1.15) * (h * 0.82);
+          starfieldState.stars.push({
+            x: Math.random() * w,
+            y: yBias,
+            baseRadius: Math.random() * 1.15 + 0.35,
+            baseAlpha: Math.random() * 0.48 + 0.12,
+            twinkleSpeed: Math.random() * 0.0028 + 0.0008,
+            twinklePhase: Math.random() * Math.PI * 2,
+            hue: Math.random() > 0.75 ? 215 : (Math.random() > 0.5 ? 42 : 0)
+          });
+        }
+      }
+
+      rebuildStars();
+      window.addEventListener('resize', rebuildStars);
+
+      window.addEventListener('mousemove', e => {
+        starfieldState.mouseX = e.clientX;
+        starfieldState.mouseY = e.clientY;
+        pointerX = (e.clientX / window.innerWidth - 0.5) * 2;
+        pointerY = (e.clientY / window.innerHeight - 0.5) * 2;
+      });
+
+      window.addEventListener('touchmove', e => {
+        if (e.touches && e.touches.length > 0) {
+          starfieldState.mouseX = e.touches[0].clientX;
+          starfieldState.mouseY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+    }
+
+    function renderStarfieldFrame(now) {
+      const canvas = document.getElementById('starfield');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = starfieldState.width;
+      const h = starfieldState.height;
+
+      // Smoothly lerp cursor glow coordinates
+      if (starfieldState.smoothX === -1000 && starfieldState.mouseX !== -1000) {
+        starfieldState.smoothX = starfieldState.mouseX;
+        starfieldState.smoothY = starfieldState.mouseY;
+      } else {
+        starfieldState.smoothX += (starfieldState.mouseX - starfieldState.smoothX) * 0.14;
+        starfieldState.smoothY += (starfieldState.mouseY - starfieldState.smoothY) * 0.14;
+      }
+
+      const mx = starfieldState.smoothX;
+      const my = starfieldState.smoothY;
+
+      // 1. Deep Obsidian Sky Gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+      skyGrad.addColorStop(0, '#090A0D');
+      skyGrad.addColorStop(0.55, '#101217');
+      skyGrad.addColorStop(0.75, '#15181F');
+      skyGrad.addColorStop(1, '#0B0C0F');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // 2. Soft Atmospheric Cursor Spotlight Glow
+      if (mx > -500 && my > -500) {
+        const cursorGlow = ctx.createRadialGradient(mx, my, 4, mx, my, 290);
+        cursorGlow.addColorStop(0, 'rgba(125, 180, 255, 0.085)');
+        cursorGlow.addColorStop(0.45, 'rgba(148, 163, 184, 0.032)');
+        cursorGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = cursorGlow;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      // 3. Draw Interactive Stars (Glow & Bloom when cursor moves near them)
+      const glowRadius = 215;
+      const glowRadiusSq = glowRadius * glowRadius;
+      const activatedStars = [];
+
+      for (let i = 0; i < starfieldState.stars.length; i++) {
+        const s = starfieldState.stars[i];
+        const twinkle = Math.sin(now * s.twinkleSpeed + s.twinklePhase) * 0.18;
+        let alpha = Math.max(0.06, Math.min(0.95, s.baseAlpha + twinkle));
+        let radius = s.baseRadius;
+
+        const dx = s.x - mx;
+        const dy = s.y - my;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq < glowRadiusSq) {
+          const dist = Math.sqrt(distSq);
+          const proximity = Math.pow(1 - dist / glowRadius, 1.55);
+          alpha = Math.min(1, alpha + proximity * 0.85);
+          radius = s.baseRadius + proximity * 1.45;
+
+          if (proximity > 0.25) {
+            activatedStars.push({ x: s.x, y: s.y, proximity });
+          }
+
+          // Crisp starlight halo around cursor-excited stars
+          const haloGrad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, radius * 6.5);
+          haloGrad.addColorStop(0, `rgba(190, 220, 255, ${(proximity * 0.42).toFixed(3)})`);
+          haloGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = haloGrad;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, radius * 6.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw subtle 4-point star flare on strongly illuminated stars
+          if (proximity > 0.55) {
+            ctx.strokeStyle = `rgba(225, 240, 255, ${(proximity * 0.48).toFixed(3)})`;
+            ctx.lineWidth = 0.7;
+            const flareLen = radius * 4.2;
+            ctx.beginPath();
+            ctx.moveTo(s.x - flareLen, s.y);
+            ctx.lineTo(s.x + flareLen, s.y);
+            ctx.moveTo(s.x, s.y - flareLen);
+            ctx.lineTo(s.x, s.y + flareLen);
+            ctx.stroke();
+          }
+        }
+
+        ctx.fillStyle = s.hue === 215
+          ? `rgba(210, 230, 255, ${alpha.toFixed(3)})`
+          : `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Ultra-faint constellation filaments between closest cursor-activated stars
+      if (activatedStars.length > 1) {
+        ctx.lineWidth = 0.6;
+        for (let i = 0; i < Math.min(activatedStars.length, 14); i++) {
+          for (let j = i + 1; j < Math.min(activatedStars.length, 14); j++) {
+            const a = activatedStars[i];
+            const b = activatedStars[j];
+            const d2 = (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+            if (d2 < 8500) {
+              const lineAlpha = Math.min(a.proximity, b.proximity) * (1 - d2 / 8500) * 0.22;
+              ctx.strokeStyle = `rgba(165, 205, 255, ${lineAlpha.toFixed(3)})`;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+
+      // 4. Distant Dark Mountain Horizon Silhouette (Portfolio Lower Third)
+      const baseRidgeY = h * 0.73;
+      const mistGrad = ctx.createRadialGradient(w * 0.55, baseRidgeY, 10, w * 0.55, baseRidgeY, w * 0.6);
+      mistGrad.addColorStop(0, 'rgba(255, 255, 255, 0.028)');
+      mistGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = mistGrad;
+      ctx.fillRect(0, baseRidgeY - 120, w, 240);
+
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      ctx.lineTo(0, baseRidgeY + 16);
+
+      const ridgePoints = [
+        { x: 0.08, y: 8 },
+        { x: 0.18, y: -12 },
+        { x: 0.28, y: 4 },
+        { x: 0.41, y: -22 },
+        { x: 0.52, y: -8 },
+        { x: 0.64, y: -28 },
+        { x: 0.74, y: -42 },
+        { x: 0.83, y: -19 },
+        { x: 0.92, y: -34 },
+        { x: 1.0, y: -14 }
+      ];
+
+      let prevX = 0;
+      let prevY = baseRidgeY + 16;
+      ridgePoints.forEach(pt => {
+        const targetX = w * pt.x;
+        const targetY = baseRidgeY + pt.y;
+        const midX = (prevX + targetX) / 2;
+        const midY = (prevY + targetY) / 2;
+        ctx.quadraticCurveTo(prevX, prevY, midX, midY);
+        prevX = targetX;
+        prevY = targetY;
+      });
+      ctx.lineTo(w, prevY);
+      ctx.lineTo(w, h);
+      ctx.closePath();
+
+      const mountainGrad = ctx.createLinearGradient(0, baseRidgeY - 45, 0, h);
+      mountainGrad.addColorStop(0, '#121419');
+      mountainGrad.addColorStop(0.4, '#0E1014');
+      mountainGrad.addColorStop(1, '#090A0D');
+      ctx.fillStyle = mountainGrad;
+      ctx.fill();
+    }
+
+    /**
+     * =====================================================================
+     * 5. PRECISION MATRIX QR RENDERER (NO AI SLOP — CUSTOM CANVAS MATRIX)
+     * =====================================================================
+     */
+    function drawPrecisionQR(canvas, text, options = {}) {
+      if (!canvas || typeof qrcode === 'undefined') return;
+      const qr = qrcode(0, 'M');
+      qr.addData(text || 'https://github.com/dev-pradhuman');
+      qr.make();
+
+      const count = qr.getModuleCount();
+      const size = options.size || 360;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const isPaper = !!options.paperMode;
+      const bg = options.bg || (isPaper ? '#EAE8E3' : '#0C0E12');
+      const fg = options.fg || (isPaper ? '#0E1014' : '#F1F5F9');
+      const accent = options.accent || (isPaper ? '#0E1014' : '#38BDF8');
+
+      // Fill background plate
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, size, size);
+
+      const padding = Math.floor(size * 0.075);
+      const avail = size - padding * 2;
+      const cellSize = avail / count;
+
+      function isFinderPattern(r, c) {
+        if (r < 7 && c < 7) return true;
+        if (r < 7 && c >= count - 7) return true;
+        if (r >= count - 7 && c < 7) return true;
+        return false;
+      }
+
+      // Draw data modules as precision rounded micro-squares
+      ctx.fillStyle = fg;
+      for (let r = 0; r < count; r++) {
+        for (let c = 0; c < count; c++) {
+          if (isFinderPattern(r, c)) continue;
+          if (!qr.isDark(r, c)) continue;
+
+          const x = padding + c * cellSize;
+          const y = padding + r * cellSize;
+          const mSize = cellSize * 0.84;
+          const offset = (cellSize - mSize) / 2;
+
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(x + offset, y + offset, mSize, mSize, mSize * 0.26);
+          } else {
+            ctx.rect(x + offset, y + offset, mSize, mSize);
+          }
+          ctx.fill();
+        }
+      }
+
+      // Draw 3 Precision Engineered Finder Eyes
+      const finderCoords = [
+        { r: 0, c: 0 },
+        { r: 0, c: count - 7 },
+        { r: count - 7, c: 0 }
+      ];
+
+      finderCoords.forEach(fc => {
+        const fx = padding + fc.c * cellSize;
+        const fy = padding + fc.r * cellSize;
+        const outerSize = cellSize * 7;
+        const ringWidth = cellSize * 0.96;
+
+        // Outer Finder Frame
+        ctx.strokeStyle = fg;
+        ctx.lineWidth = ringWidth;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(
+            fx + ringWidth / 2,
+            fy + ringWidth / 2,
+            outerSize - ringWidth,
+            outerSize - ringWidth,
+            cellSize * 1.4
+          );
+        } else {
+          ctx.rect(fx + ringWidth / 2, fy + ringWidth / 2, outerSize - ringWidth, outerSize - ringWidth);
+        }
+        ctx.stroke();
+
+        // Inner Finder Core (3x3)
+        const coreSize = cellSize * 3;
+        const coreX = fx + cellSize * 2;
+        const coreY = fy + cellSize * 2;
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(coreX, coreY, coreSize, coreSize, cellSize * 0.75);
+        } else {
+          ctx.rect(coreX, coreY, coreSize, coreSize);
+        }
+        ctx.fill();
+      });
+    }
+
+    /**
+     * =====================================================================
+     * 6. LEFT WHEEL: LIVE DESTINATION PAGE UI PREVIEW TEMPLATES
+     * =====================================================================
+     */
+    // Pre-computed GitHub contribution graph cells matching screenshot's green clusters
+    const GH_HEATMAP_COLS = 28;
+    const GH_HEATMAP_ROWS = 7;
+
+    function buildGitHubHeatmapHTML() {
+      let cells = '';
+      for (let c = 0; c < GH_HEATMAP_COLS; c++) {
+        for (let r = 0; r < GH_HEATMAP_ROWS; r++) {
+          let color = '#161B22';
+          // Create realistic clusters in Jul/Aug/Sep/Oct (right half of graph) matching user screenshot
+          if (c >= 16 && c <= 18 && (r === 1 || r === 2 || r === 3 || r === 5)) {
+            color = (r === 2 || r === 3) ? '#39D353' : '#26A641';
+          } else if (c >= 21 && c <= 27) {
+            const hash = (c * 7 + r * 13) % 11;
+            if (hash === 0) color = '#39D353';
+            else if (hash < 3) color = '#26A641';
+            else if (hash < 6) color = '#006D32';
+            else if (hash === 6) color = '#0E4429';
+          } else if (c === 8 && r === 1) {
+            color = '#0E4429';
+          }
+          cells += `<span style="background:${color};" class="w-[5.5px] h-[5.5px] rounded-[1.2px] block"></span>`;
+        }
+      }
+      return cells;
+    }
+
+    const CACHED_GH_HEATMAP = buildGitHubHeatmapHTML();
+
+    function renderDestinationPreviewHTML(item) {
+      const pfpClass = PROFILE_CONFIG.isCustomCrop ? 'samurai-avatar-custom' : 'samurai-avatar-crop';
+
+      // If user uploaded a custom screenshot override for this card, render it directly
+      if (item.customPreviewUrl) {
+        return `
+          <div class="preview-scale-inner w-[468px] h-[294px] bg-[#0D1117] relative overflow-hidden">
+            <img src="${escapeHtml(item.customPreviewUrl)}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover object-top" />
+          </div>
+        `;
+      }
+
+      // 1. GITHUB PROFILE REPLICA (Exact match to attached screenshot image_ead3b6.jpg)
+      if (item.platform === 'github') {
+        return `
+          <div class="preview-scale-inner w-[468px] h-[294px] bg-[#0D1117] text-[#E6EDF3] font-sans flex flex-col overflow-hidden select-none">
+            <!-- Top GitHub Dark Header Bar -->
+            <div class="bg-[#010409] border-b border-[#30363D] px-3 pt-2 pb-0">
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3.5 h-3.5 rounded border border-[#30363D] flex items-center justify-center text-[#7D8590] text-[7px]">☰</span>
+                  <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                  <span class="text-[8px] font-semibold text-white">Dev-pradhuman</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <div class="px-2 py-0.5 rounded border border-[#30363D] bg-[#0D1117] text-[6.5px] text-[#7D8590] flex items-center gap-2">
+                    <span>🔍 Type <kbd class="px-0.5 border border-[#30363D] rounded">/</kbd> to search</span>
+                  </div>
+                  <div class="w-3.5 h-3.5 rounded-full overflow-hidden border border-[#30363D]">
+                    <img src="${escapeHtml(PROFILE_CONFIG.pfpUrl)}" class="${pfpClass}" onerror="handlePfpError(this)" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- GitHub Navigation Tabs -->
+              <div class="flex items-center gap-3 text-[7px] text-[#E6EDF3]">
+                <div class="pb-1 border-b-2 border-[#F78166] font-semibold flex items-center gap-1">
+                  <span>📖 Overview</span>
+                </div>
+                <div class="pb-1 text-[#7D8590] flex items-center gap-1">
+                  <span>📦 Repositories</span>
+                  <span class="px-1 rounded-full bg-[#30363D]/80 text-[#E6EDF3] text-[6px]">31</span>
+                </div>
+                <div class="pb-1 text-[#7D8590]">⊞ Projects</div>
+                <div class="pb-1 text-[#7D8590]">⬡ Packages</div>
+                <div class="pb-1 text-[#7D8590] flex items-center gap-1">
+                  <span>☆ Stars</span>
+                  <span class="px-1 rounded-full bg-[#30363D]/80 text-[#E6EDF3] text-[6px]">1</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Main GitHub Profile Body (2 Columns matching screenshot) -->
+            <div class="flex-1 px-3.5 py-2.5 grid grid-cols-12 gap-3 overflow-hidden">
+              <!-- Left Sidebar (4 cols): Samurai PFP + Bio + LinkedIn + PRO -->
+              <div class="col-span-4 flex flex-col">
+                <div class="relative w-[76px] h-[76px] mx-auto sm:mx-0 mb-1.5">
+                  <div class="w-full h-full rounded-full overflow-hidden border border-[#30363D] bg-[#161B22]">
+                    <img src="${escapeHtml(PROFILE_CONFIG.pfpUrl)}" alt="Pradhuman" class="${pfpClass}" onerror="handlePfpError(this)" />
+                  </div>
+                  <span class="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full bg-[#0D1117] border border-[#30363D] flex items-center justify-center text-[7px]">☺</span>
+                </div>
+
+                <div class="text-[10px] font-bold text-white leading-tight">Pradhuman</div>
+                <div class="text-[7.5px] text-[#7D8590] mb-1.5">Dev-pradhuman · he/him</div>
+
+                <div class="text-[6.8px] text-[#E6EDF3] leading-[1.35] mb-1.5">
+                  Software × AI × Mechanical engineer · C++ Game Engines · AI-developer
+                </div>
+
+                <div class="w-full py-0.5 text-center rounded border border-[#30363D] bg-[#21262D] text-[6.8px] font-medium text-[#E6EDF3] mb-1.5">
+                  Edit profile
+                </div>
+
+                <div class="text-[6.5px] text-[#7D8590] mb-1">
+                  👥 <strong class="text-[#E6EDF3]">3</strong> followers · <strong class="text-[#E6EDF3]">0</strong> following
+                </div>
+
+                <div class="text-[6.2px] text-[#E6EDF3] truncate mb-1.5 flex items-center gap-1">
+                  <span class="text-[#7D8590]">in</span>
+                  <span class="truncate">in/pradhuman-sharma-5208342b6</span>
+                </div>
+
+                <div class="border-t border-[#30363D] pt-1 mt-auto">
+                  <div class="text-[6.5px] font-semibold text-[#E6EDF3] mb-0.5">Highlights</div>
+                  <div class="text-[6px] text-[#7D8590] mb-0.5">❖ Developer Program Member</div>
+                  <span class="inline-block px-1.5 py-0.2 rounded-full border border-purple-500/60 text-purple-300 text-[5.5px] font-semibold tracking-wider">☆ PRO</span>
+                </div>
+              </div>
+
+              <!-- Right Column (8 cols): Popular Repositories 2x3 Grid + 576 Contributions -->
+              <div class="col-span-8 flex flex-col justify-between overflow-hidden">
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-[7.5px] font-medium text-[#E6EDF3]">Popular repositories</span>
+                    <span class="text-[6px] text-[#2F81F7]">Customize your pins</span>
+                  </div>
+
+                  <!-- 2x3 Pinned Repos Grid -->
+                  <div class="grid grid-cols-2 gap-1.5 mb-2">
+                    <!-- Repo 1: shell-switch -->
+                    <div class="p-1.5 rounded border border-[#30363D] bg-[#0D1117] flex flex-col justify-between">
+                      <div>
+                        <div class="flex items-center justify-between">
+                          <span class="text-[7px] font-semibold text-[#2F81F7]">shell-switch</span>
+                          <span class="px-1 rounded-full border border-[#30363D] text-[5px] text-[#7D8590]">Public</span>
+                        </div>
+                        <p class="text-[5.5px] text-[#7D8590] line-clamp-2 mt-0.5 leading-tight">
+                          ⚡ Live Hot-Swapping for Hyprland & Wayland Desktop Shells & Rices
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-2 mt-1 text-[5.5px] text-[#7D8590]">
+                        <span class="flex items-center gap-0.5"><i class="w-1.5 h-1.5 rounded-full bg-[#89E051] inline-block"></i> Shell</span>
+                        <span>☆ 1</span>
+                      </div>
+                    </div>
+
+                    <!-- Repo 2: auto-committer -->
+                    <div class="p-1.5 rounded border border-[#30363D] bg-[#0D1117] flex flex-col justify-between">
+                      <div>
+                        <div class="flex items-center justify-between">
+                          <span class="text-[7px] font-semibold text-[#2F81F7]">auto-committer</span>
+                          <span class="px-1 rounded-full border border-[#30363D] text-[5px] text-[#7D8590]">Public</span>
+                        </div>
+                        <p class="text-[5.5px] text-[#7D8590] line-clamp-2 mt-0.5 leading-tight">
+                          Auto-generated commits from the Auto Committer app.
+                        </p>
+                      </div>
+                      <div class="text-[5.5px] text-[#7D8590] mt-1">Automated workflow</div>
+                    </div>
+
+                    <!-- Repo 3: cravora -->
+                    <div class="p-1.5 rounded border border-[#30363D] bg-[#0D1117] flex flex-col justify-between">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[7px] font-semibold text-[#2F81F7]">cravora</span>
+                        <span class="px-1 rounded-full border border-[#30363D] text-[5px] text-[#7D8590]">Public</span>
+                      </div>
+                      <div class="flex items-center gap-1 mt-1.5 text-[5.5px] text-[#7D8590]">
+                        <i class="w-1.5 h-1.5 rounded-full bg-[#3178C6] inline-block"></i> TypeScript
+                      </div>
+                    </div>
+
+                    <!-- Repo 4: valora -->
+                    <div class="p-1.5 rounded border border-[#30363D] bg-[#0D1117] flex flex-col justify-between">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[7px] font-semibold text-[#2F81F7]">valora</span>
+                        <span class="px-1 rounded-full border border-[#30363D] text-[5px] text-[#7D8590]">Public</span>
+                      </div>
+                      <div class="flex items-center gap-1 mt-1.5 text-[5.5px] text-[#7D8590]">
+                        <i class="w-1.5 h-1.5 rounded-full bg-[#3572A5] inline-block"></i> Python
+                      </div>
+                    </div>
+
+                    <!-- Repo 5: aegis-jarvis -->
+                    <div class="p-1.5 rounded border border-[#30363D] bg-[#0D1117] flex flex-col justify-between">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[7px] font-semibold text-[#2F81F7]">aegis-jarvis</span>
+                        <span class="px-1 rounded-full border border-[#30363D] text-[5px] text-[#7D8590]">Public</span>
+                      </div>
+                      <div class="flex items-center gap-1 mt-1.5 text-[5.5px] text-[#7D8590]">
+                        <i class="w-1.5 h-1.5 rounded-full bg-[#3178C6] inline-block"></i> TypeScript
+                      </div>
+                    </div>
+
+                    <!-- Repo 6: tom-riddle -->
+                    <div class="p-1.5 rounded border border-[#30363D] bg-[#0D1117] flex flex-col justify-between">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[7px] font-semibold text-[#2F81F7]">tom-riddle</span>
+                        <span class="px-1 rounded-full border border-[#30363D] text-[5px] text-[#7D8590]">Public</span>
+                      </div>
+                      <div class="flex items-center gap-1 mt-1.5 text-[5.5px] text-[#7D8590]">
+                        <i class="w-1.5 h-1.5 rounded-full bg-[#563D7C] inline-block"></i> CSS
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 576 Contributions Heatmap Box -->
+                <div>
+                  <div class="flex items-center justify-between mb-0.5">
+                    <span class="text-[6.8px] font-medium text-[#E6EDF3]">576 contributions in the last year</span>
+                    <span class="px-1.5 py-0.5 rounded bg-[#1F6FEB] text-white text-[5.5px] font-semibold">2026</span>
+                  </div>
+                  <div class="p-1.5 rounded border border-[#30363D] bg-[#0D1117]">
+                    <div class="grid grid-flow-col grid-rows-7 gap-[1.8px] justify-start">
+                      ${CACHED_GH_HEATMAP}
+                    </div>
+                    <div class="flex items-center justify-between mt-1 text-[5px] text-[#7D8590]">
+                      <span>Contributed to Dev-pradhuman/auto-committer, Brainrot...</span>
+                      <div class="flex items-center gap-0.5">
+                        <span>Less</span>
+                        <i class="w-1.5 h-1.5 rounded-[1px] bg-[#161B22] inline-block"></i>
+                        <i class="w-1.5 h-1.5 rounded-[1px] bg-[#0E4429] inline-block"></i>
+                        <i class="w-1.5 h-1.5 rounded-[1px] bg-[#006D32] inline-block"></i>
+                        <i class="w-1.5 h-1.5 rounded-[1px] bg-[#26A641] inline-block"></i>
+                        <i class="w-1.5 h-1.5 rounded-[1px] bg-[#39D353] inline-block"></i>
+                        <span>More</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 2. INSTAGRAM DARK WEB PROFILE PREVIEW (@just__pradhuman)
+      if (item.platform === 'instagram') {
+        return `
+          <div class="preview-scale-inner w-[468px] h-[294px] bg-[#060709] text-white font-sans flex flex-col overflow-hidden select-none">
+            <!-- Top IG Browser Bar -->
+            <div class="px-4 py-2 border-b border-white/10 flex items-center justify-between bg-[#0B0C10]">
+              <div class="flex items-center gap-1.5">
+                <span class="text-zinc-400">${PLATFORM_GLYPHS.instagram}</span>
+                <span class="text-[9px] font-semibold tracking-wide">Instagram</span>
+              </div>
+              <div class="px-2.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[7px] font-mono text-zinc-400">
+                instagram.com/just__pradhuman
+              </div>
+              <span class="text-[8px] font-semibold text-sky-400">Open App ↗</span>
+            </div>
+
+            <!-- Profile Header Info -->
+            <div class="px-5 pt-3 pb-2.5 flex items-center gap-5 border-b border-white/10">
+              <!-- Gradient Story Ring + Samurai PFP -->
+              <div class="p-[2px] rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600 shrink-0">
+                <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-black bg-zinc-900">
+                  <img src="${escapeHtml(PROFILE_CONFIG.pfpUrl)}" alt="just__pradhuman" class="${pfpClass}" onerror="handlePfpError(this)" />
+                </div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1.5">
+                  <span class="text-xs font-semibold text-white truncate">just__pradhuman</span>
+                  <span class="px-2.5 py-0.5 rounded bg-[#0095F6] text-white text-[8px] font-semibold">Follow</span>
+                  <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[8px] font-medium">Message</span>
+                </div>
+
+                <div class="flex items-center gap-4 text-[8px] text-zinc-300 mb-1.5">
+                  <span><strong class="text-white">18</strong> posts</span>
+                  <span><strong class="text-white">640</strong> followers</span>
+                  <span><strong class="text-white">215</strong> following</span>
+                </div>
+
+                <div class="text-[8px] leading-snug">
+                  <div class="font-semibold text-white">Pradhuman</div>
+                  <div class="text-zinc-400">Software × AI × Mechanical Engineer · C++ & Hyprland ⚡</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Story Highlights Row -->
+            <div class="px-5 py-2 flex items-center gap-4 border-b border-white/[0.07]">
+              <div class="flex flex-col items-center gap-0.5">
+                <div class="w-7 h-7 rounded-full border border-white/25 bg-zinc-900 flex items-center justify-center text-[8px]">⚡</div>
+                <span class="text-[6.5px] text-zinc-400">Hyprland</span>
+              </div>
+              <div class="flex flex-col items-center gap-0.5">
+                <div class="w-7 h-7 rounded-full border border-white/25 bg-zinc-900 flex items-center justify-center text-[8px]">🎮</div>
+                <span class="text-[6.5px] text-zinc-400">C++ Engine</span>
+              </div>
+              <div class="flex flex-col items-center gap-0.5">
+                <div class="w-7 h-7 rounded-full border border-white/25 bg-zinc-900 flex items-center justify-center text-[8px]">🤖</div>
+                <span class="text-[6.5px] text-zinc-400">AI Lab</span>
+              </div>
+              <div class="flex flex-col items-center gap-0.5">
+                <div class="w-7 h-7 rounded-full border border-white/25 bg-zinc-900 flex items-center justify-center text-[8px]">🗡️</div>
+                <span class="text-[6.5px] text-zinc-400">Art</span>
+              </div>
+            </div>
+
+            <!-- 3-Column Visual Post Grid -->
+            <div class="flex-1 grid grid-cols-3 gap-1 p-1.5 bg-[#040507] overflow-hidden">
+              <div class="rounded overflow-hidden relative bg-zinc-900 border border-white/5">
+                <img src="${escapeHtml(PROFILE_CONFIG.pfpUrl)}" class="w-full h-full object-cover object-center opacity-90" onerror="handlePfpError(this)" />
+                <span class="absolute bottom-1 left-1.5 text-[6.5px] font-mono text-white/80 bg-black/60 px-1 rounded">PINNED</span>
+              </div>
+              <div class="rounded overflow-hidden relative bg-gradient-to-br from-[#0F172A] via-[#1E1B4B] to-[#090A0F] border border-white/10 p-2 flex flex-col justify-between">
+                <span class="text-[6.5px] font-mono text-sky-400">// SHELL-SWITCH</span>
+                <div class="text-[8px] font-semibold text-white leading-tight">Wayland & Hyprland Rice</div>
+                <span class="text-[6px] font-mono text-zinc-400">♥ 124</span>
+              </div>
+              <div class="rounded overflow-hidden relative bg-gradient-to-br from-[#18181B] via-[#090D16] to-black border border-white/10 p-2 flex flex-col justify-between">
+                <span class="text-[6.5px] font-mono text-emerald-400">// AEGIS-JARVIS</span>
+                <div class="text-[8px] font-semibold text-white leading-tight">AI Systems & C++ Core</div>
+                <span class="text-[6px] font-mono text-zinc-400">♥ 98</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 3. WHATSAPP DIRECT ENCRYPTED CHAT PREVIEW (+91 96259 35401)
+      if (item.platform === 'whatsapp') {
+        return `
+          <div class="preview-scale-inner w-[468px] h-[294px] bg-[#0B141A] text-[#E9EDEF] font-sans flex flex-col overflow-hidden select-none">
+            <!-- Top WhatsApp Contact Bar -->
+            <div class="bg-[#202C33] px-4 py-2 flex items-center justify-between border-b border-white/10">
+              <div class="flex items-center gap-2.5">
+                <div class="relative w-8 h-8 rounded-full overflow-hidden border border-emerald-500/40 bg-zinc-900">
+                  <img src="${escapeHtml(PROFILE_CONFIG.pfpUrl)}" alt="Pradhuman" class="${pfpClass}" onerror="handlePfpError(this)" />
+                </div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] font-semibold text-white">Pradhuman</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#00A884]"></span>
+                  </div>
+                  <div class="text-[7.5px] font-mono text-[#8696A0]">+91 96259 35401 · online</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-[#00A884]/20 border border-[#00A884]/40 text-[#00A884] text-[7.5px] font-mono">
+                  wa.me/919625935401
+                </span>
+              </div>
+            </div>
+
+            <!-- Chat Messages Area -->
+            <div class="flex-1 px-4 py-2.5 flex flex-col justify-between bg-[#0B141A] relative overflow-hidden">
+              <!-- Encryption Notice Pill -->
+              <div class="mx-auto px-3 py-1 rounded-lg bg-[#182229] border border-white/5 text-[6.8px] text-[#FFD279] text-center max-w-[85%]">
+                🔒 Messages are end-to-end encrypted. Click to start a direct chat with Pradhuman.
+              </div>
+
+              <!-- Chat Bubbles -->
+              <div class="space-y-2 my-auto">
+                <div class="bg-[#202C33] border border-white/5 rounded-xl rounded-tl-none px-3 py-1.5 max-w-[78%] self-start shadow">
+                  <div class="text-[7.5px] font-semibold text-emerald-400 mb-0.5">Pradhuman</div>
+                  <div class="text-[8.5px] text-[#E9EDEF] leading-snug">
+                    Hey! Feel free to reach out for software, AI, C++ game engines, or collaborations.
+                  </div>
+                  <div class="text-[6px] text-[#8696A0] text-right mt-0.5">12:20 PM</div>
+                </div>
+
+                <div class="bg-[#005C4B] rounded-xl rounded-tr-none px-3 py-1.5 max-w-[74%] ml-auto shadow">
+                  <div class="text-[8.5px] text-white leading-snug">
+                    Hey Pradhuman! Found your portfolio link hub. Let's connect ⚡
+                  </div>
+                  <div class="text-[6px] text-emerald-200/80 text-right mt-0.5">12:23 PM ✓✓</div>
+                </div>
+              </div>
+
+              <!-- Bottom Message Compose Bar -->
+              <div class="bg-[#202C33] rounded-xl px-3 py-1.5 flex items-center justify-between border border-white/10">
+                <span class="text-[8px] text-[#8696A0]">Message +91 96259 35401...</span>
+                <span class="px-2.5 py-0.5 rounded-md bg-[#00A884] text-black font-semibold text-[7.5px]">
+                  Chat Now ↗
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 4. GENERIC / LINKEDIN / PORTFOLIO DESTINATION PREVIEW
+      return `
+        <div class="preview-scale-inner w-[468px] h-[294px] bg-[#0D1117] text-white font-sans flex flex-col justify-between p-5 overflow-hidden select-none">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-sky-400">${PLATFORM_GLYPHS[item.platform] || PLATFORM_GLYPHS.website}</span>
+              <span class="text-xs font-semibold">${escapeHtml(item.title)}</span>
+            </div>
+            <span class="text-[8px] font-mono text-zinc-400 truncate max-w-[220px]">${escapeHtml(item.url)}</span>
+          </div>
+
+          <div class="flex items-center gap-4 my-auto">
+            <div class="w-16 h-16 rounded-full overflow-hidden border border-white/20 shrink-0">
+              <img src="${escapeHtml(PROFILE_CONFIG.pfpUrl)}" class="${pfpClass}" onerror="handlePfpError(this)" />
+            </div>
+            <div>
+              <div class="text-sm font-bold text-white">${escapeHtml(PROFILE_CONFIG.name)}</div>
+              <div class="text-xs font-mono text-sky-400 mt-0.5">${escapeHtml(item.subtitle)}</div>
+              <p class="text-[9px] text-zinc-400 mt-1">${escapeHtml(PROFILE_CONFIG.bio)}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-white/10 text-[8px] font-mono text-zinc-400">
+            <span>${escapeHtml(item.badge || 'DESTINATION')}</span>
+            <span class="text-white">Open Destination ↗</span>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * =====================================================================
+     * 7. BUILD DUAL-WHEEL DOM ELEMENTS (LEFT PAGE PREVIEWS + RIGHT QR TILES)
+     * =====================================================================
+     */
+    const VIRTUAL_SLOTS = [-2, -1, 0, 1, 2];
+
+    function buildWheelDOM() {
+      const leftContainer = document.getElementById('left-wheel-container');
+      const rightContainer = document.getElementById('right-wheel-container');
+      leftContainer.innerHTML = '';
+      rightContainer.innerHTML = '';
+
+      VIRTUAL_SLOTS.forEach(slotOffset => {
+        // 1. Left Destination Page Preview Window
+        const card = document.createElement('div');
+        card.className = 'preview-window-card pointer-events-auto';
+        card.dataset.slot = slotOffset;
+        card.onclick = () => handleSlotClick(slotOffset);
+        leftContainer.appendChild(card);
+
+        // 2. Right Machined Hardware QR Matrix Tile
+        const tile = document.createElement('div');
+        tile.className = 'hardware-qr-tile pointer-events-auto';
+        tile.dataset.slot = slotOffset;
+        tile.onclick = () => handleRightTileClick(slotOffset);
+        rightContainer.appendChild(tile);
+      });
+
+      renderWheelDots();
+      updateWheelSlotContents(true);
+    }
+
+    function wrapIndex(idx, length) {
+      return ((idx % length) + length) % length;
+    }
+
+    function handleSlotClick(slotOffset) {
+      const nearestInt = Math.round(wheelTarget);
+      if (slotOffset === 0) {
+        const activeIdx = wrapIndex(nearestInt, activeLinks.length);
+        const item = activeLinks[activeIdx];
+        if (item && item.url) {
+          window.open(item.url, '_blank', 'noopener,noreferrer');
+        }
+      } else {
+        wheelTarget = nearestInt + slotOffset;
+        playWheelTick();
+      }
+    }
+
+    function handleRightTileClick(slotOffset) {
+      const nearestInt = Math.round(wheelTarget);
+      if (slotOffset === 0) {
+        openActiveQRModal();
+      } else {
+        wheelTarget = nearestInt + slotOffset;
+        playWheelTick();
+      }
+    }
+
+    function updateWheelSlotContents(forceRebuild = false) {
+      const baseIndex = Math.round(wheelCurrent);
+      if (!forceRebuild && baseIndex === updateWheelSlotContents.lastBaseIndex) return;
+      updateWheelSlotContents.lastBaseIndex = baseIndex;
+
+      const leftCards = document.querySelectorAll('#left-wheel-container .preview-window-card');
+      const rightTiles = document.querySelectorAll('#right-wheel-container .hardware-qr-tile');
+
+      leftCards.forEach(card => {
+        const slotOffset = parseInt(card.dataset.slot, 10);
+        const itemIndex = wrapIndex(baseIndex + slotOffset, activeLinks.length);
+        const item = activeLinks[itemIndex];
+        card.innerHTML = renderDestinationPreviewHTML(item);
+      });
+
+      // Populate Right Machined Obsidian QR Matrix Bezels
+      rightTiles.forEach((tile, idx) => {
+        const slotOffset = parseInt(tile.dataset.slot, 10);
+        const itemIndex = wrapIndex(baseIndex + slotOffset, activeLinks.length);
+        const item = activeLinks[itemIndex];
+        const num = String(itemIndex + 1).padStart(2, '0');
+        const glyph = PLATFORM_GLYPHS[item.platform] || PLATFORM_GLYPHS.website;
+        const canvasId = `hw-qr-slot-${idx}`;
+
+        tile.innerHTML = `
+          <div class="hardware-qr-well ${qrPaperContrastMode ? 'light-plate' : ''}">
+            <!-- Top Micro Hardware Bezel Header -->
+            <div class="w-full flex items-center justify-between px-1 text-[8px] font-mono ${qrPaperContrastMode ? 'text-zinc-700' : 'text-zinc-400'}">
+              <span class="flex items-center gap-1">
+                <i class="w-1.5 h-1.5 rounded-full ${qrPaperContrastMode ? 'bg-zinc-900' : 'bg-sky-400'}"></i>
+                <span>N°${num}</span>
+              </span>
+              <span class="uppercase tracking-wider truncate max-w-[90px]">${escapeHtml(item.title)}</span>
+              <span>${glyph}</span>
+            </div>
+
+            <!-- Precision Custom-Rendered QR Matrix Canvas -->
+            <div class="flex-1 w-full flex items-center justify-center my-0.5 overflow-hidden">
+              <canvas id="${canvasId}" class="w-[148px] h-[148px] max-w-full max-h-full rounded-lg"></canvas>
+            </div>
+
+            <!-- Bottom Bezel Telemetry Footer -->
+            <div class="w-full flex items-center justify-between px-1 text-[7.5px] font-mono ${qrPaperContrastMode ? 'text-zinc-600' : 'text-zinc-500'}">
+              <span class="truncate max-w-[115px]">${escapeHtml(item.subtitle)}</span>
+              <span class="${qrPaperContrastMode ? 'text-zinc-900 font-semibold' : 'text-zinc-300'}">[SCAN]</span>
+            </div>
+          </div>
+        `;
+
+        const qrCanvas = tile.querySelector(`#${canvasId}`);
+        if (qrCanvas) {
+          drawPrecisionQR(qrCanvas, item.url, {
+            size: 320,
+            paperMode: qrPaperContrastMode
+          });
+        }
+      });
+
+      // Update Center Active Readout
+      const activeIdx = wrapIndex(baseIndex, activeLinks.length);
+      const activeItem = activeLinks[activeIdx];
+      if (activeItem) {
+        const numFormatted = String(activeIdx + 1).padStart(2, '0');
+        const totalFormatted = String(activeLinks.length).padStart(2, '0');
+
+        document.getElementById('active-counter').textContent = `N°${numFormatted} / ${totalFormatted}`;
+        document.getElementById('telemetry-wheel-pos').textContent = `WHEEL ${numFormatted}/${totalFormatted}`;
+        document.getElementById('active-title').textContent = activeItem.title;
+        document.getElementById('active-tag-pill').textContent = activeItem.badge || `W/${activeItem.platform.toUpperCase()}`;
+        document.getElementById('active-year-pill').textContent = activeItem.year || '2026';
+        document.getElementById('active-handle').textContent = activeItem.subtitle;
+        document.getElementById('active-open-btn').href = activeItem.url;
+        document.getElementById('active-cta-text').textContent = `Open ${activeItem.title}`;
+      }
+
+      updateWheelDots(activeIdx);
+    }
+
+    function toggleQrContrastMode() {
+      qrPaperContrastMode = !qrPaperContrastMode;
+      const label = document.getElementById('qr-tile-mode-label');
+      const dot = document.getElementById('qr-mode-dot');
+      if (label) {
+        label.textContent = qrPaperContrastMode ? 'Paper Contrast' : 'Dark Matrix';
+      }
+      if (dot) {
+        dot.className = qrPaperContrastMode ? 'w-2 h-2 rounded-full bg-amber-300' : 'w-2 h-2 rounded-full bg-sky-400';
+      }
+      updateWheelSlotContents(true);
+      if (currentMode === 'qrcodes') renderAllQrGrid();
+      showToast(qrPaperContrastMode ? 'QR Mode: Light Paper Contrast' : 'QR Mode: Stealth Dark Matrix');
+    }
+
+    /**
+     * =====================================================================
+     * 8. 60FPS DUAL-WHEEL ARC + STARFIELD ANIMATION LOOP
+     * =====================================================================
+     */
+    let frameCount = 0;
+    let lastFpsTime = performance.now();
+
+    function animateMainLoop(now) {
+      // 1. Update Telemetry FPS Counter
+      frameCount++;
+      if (now - lastFpsTime >= 500) {
+        const fps = Math.min(60, Math.round((frameCount * 1000) / (now - lastFpsTime)));
+        const fpsEl = document.getElementById('telemetry-fps');
+        if (fpsEl) fpsEl.textContent = fps;
+        frameCount = 0;
+        lastFpsTime = now;
+      }
+
+      // 2. Render Interactive Starry Cursor-Glow Background
+      renderStarfieldFrame(now);
+
+      // 3. Smooth Lerp Interpolation toward wheelTarget
+      const diff = wheelTarget - wheelCurrent;
+      wheelCurrent += diff * 0.11;
+
+      const currentRounded = Math.round(wheelCurrent);
+      if (currentRounded !== lastActiveIndex) {
+        lastActiveIndex = currentRounded;
+        updateWheelSlotContents(false);
+      }
+
+      const baseIndex = Math.round(wheelCurrent);
+      const frac = wheelCurrent - baseIndex;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const isMobile = vw < 768;
+      const isTablet = vw >= 768 && vw < 1150;
+
+      // Position Left Destination Preview Cards along the Left Arc
+      const leftCards = document.querySelectorAll('#left-wheel-container .preview-window-card');
+      leftCards.forEach(card => {
+        const slotOffset = parseInt(card.dataset.slot, 10);
+        const rel = slotOffset - frac;
+        const absRel = Math.abs(rel);
+
+        let x, y, rotZ, rotY, scale, opacity;
+
+        if (isMobile) {
+          x = -vw * 0.11 - Math.pow(absRel, 1.3) * 85;
+          y = -vh * 0.23 + rel * 205;
+          rotZ = rel * 26;
+          rotY = 8;
+          scale = Math.max(0.45, 0.88 - absRel * 0.28);
+          opacity = Math.max(0, 1 - absRel * 0.55);
+        } else {
+          const baseCenterX = isTablet ? -vw * 0.24 : -vw * 0.27;
+          const cornerPullLeft = Math.pow(absRel, 1.25) * (isTablet ? 140 : 210);
+          x = baseCenterX - cornerPullLeft + pointerX * (1 - Math.min(1, absRel)) * 10;
+          y = rel * (vh * 0.44) + pointerY * (1 - Math.min(1, absRel)) * 7;
+          rotZ = -1.0 + rel * 36;
+          rotY = 10 - absRel * 4 + pointerX * 4;
+          scale = Math.max(0.4, 1 - absRel * 0.35);
+          opacity = absRel > 1.65 ? 0 : Math.max(0.25, 1 - absRel * 0.32);
+        }
+
+        card.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0px) rotateY(${rotY.toFixed(1)}deg) rotateZ(${rotZ.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
+        card.style.opacity = opacity.toFixed(2);
+        card.style.zIndex = String(20 - Math.round(absRel * 5));
+      });
+
+      // Position Right Machined Hardware QR Tiles along the Right Arc
+      const rightTiles = document.querySelectorAll('#right-wheel-container .hardware-qr-tile');
+      rightTiles.forEach(tile => {
+        const slotOffset = parseInt(tile.dataset.slot, 10);
+        const rel = slotOffset - frac;
+        const absRel = Math.abs(rel);
+
+        let x, y, rotZ, rotY, scale, opacity;
+
+        if (isMobile) {
+          x = vw * 0.23 + Math.pow(absRel, 1.2) * 55;
+          y = vh * 0.23 + rel * 175;
+          rotZ = -rel * 32;
+          rotY = -10;
+          scale = Math.max(0.45, 0.9 - absRel * 0.28);
+          opacity = Math.max(0, 1 - absRel * 0.55);
+        } else {
+          const baseRightX = isTablet ? vw * 0.175 : vw * 0.165;
+          const cornerPushRight = Math.pow(absRel, 1.15) * (isTablet ? 155 : 245);
+          x = baseRightX + cornerPushRight + pointerX * (1 - Math.min(1, absRel)) * -12;
+          y = rel * (vh * 0.42) + pointerY * (1 - Math.min(1, absRel)) * -8;
+          rotZ = -rel * 36;
+          rotY = -10 + pointerX * 5;
+          scale = Math.max(0.42, 1 - absRel * 0.34);
+          opacity = absRel > 1.65 ? 0 : Math.max(0.3, 1 - absRel * 0.28);
+        }
+
+        tile.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0px) rotateY(${rotY.toFixed(1)}deg) rotateZ(${rotZ.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
+        tile.style.opacity = opacity.toFixed(2);
+        tile.style.zIndex = String(20 - Math.round(absRel * 5));
+      });
+
+      // Center column subtle motion
+      const centerInfo = document.getElementById('center-selector-info');
+      if (centerInfo) {
+        const centerOffsetX = isMobile ? 0 : -vw * 0.01;
+        const centerOffsetY = frac * -26;
+        const centerOpacity = Math.max(0.35, 1 - Math.abs(frac) * 1.1);
+        centerInfo.style.transform = `translate3d(${centerOffsetX}px, ${centerOffsetY.toFixed(1)}px, 0)`;
+        centerInfo.style.opacity = centerOpacity.toFixed(2);
+      }
+
+      requestAnimationFrame(animateMainLoop);
+    }
+
+    /**
+     * =====================================================================
+     * 9. WHEEL SCROLL, TOUCH DRAG & KEYBOARD INTERACTION HANDLERS
+     * =====================================================================
+     */
+    let wheelSnapTimeout = null;
+    let isDragging = false;
+    let dragStartY = 0;
+    let dragStartTarget = 0;
+
+    function initWheelInteractions() {
+      window.addEventListener(
+        'wheel',
+        e => {
+          if (currentMode !== 'selector') return;
+          if (isAnyModalOpen()) return;
+          e.preventDefault();
+
+          const delta = Math.max(-120, Math.min(120, e.deltaY));
+          wheelTarget += delta * 0.0042;
+
+          clearTimeout(wheelSnapTimeout);
+          wheelSnapTimeout = setTimeout(() => {
+            const snapped = Math.round(wheelTarget);
+            if (snapped !== Math.round(wheelCurrent)) playWheelTick();
+            wheelTarget = snapped;
+          }, 140);
+        },
+        { passive: false }
+      );
+
+      const selectorEl = document.getElementById('view-selector');
+      selectorEl.addEventListener(
+        'touchstart',
+        e => {
+          if (currentMode !== 'selector' || isAnyModalOpen()) return;
+          if (e.touches.length === 1) {
+            isDragging = true;
+            dragStartY = e.touches[0].clientY;
+            dragStartTarget = wheelTarget;
+          }
+        },
+        { passive: true }
+      );
+
+      selectorEl.addEventListener(
+        'touchmove',
+        e => {
+          if (!isDragging || currentMode !== 'selector') return;
+          const dy = dragStartY - e.touches[0].clientY;
+          wheelTarget = dragStartTarget + dy / 160;
+        },
+        { passive: true }
+      );
+
+      selectorEl.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        wheelTarget = Math.round(wheelTarget);
+        playWheelTick();
+      });
+    }
+
+    function stepWheel(direction) {
+      wheelTarget = Math.round(wheelTarget) + direction;
+      playWheelTick();
+    }
+
+    function scrollToIndex(targetIdx) {
+      const currentIdx = wrapIndex(Math.round(wheelTarget), activeLinks.length);
+      const diff = targetIdx - currentIdx;
+      wheelTarget = Math.round(wheelTarget) + diff;
+      playWheelTick();
+    }
+
+    function renderWheelDots() {
+      const dotsContainer = document.getElementById('wheel-dots');
+      if (!dotsContainer) return;
+      dotsContainer.innerHTML = '';
+      activeLinks.forEach((item, idx) => {
+        const dot = document.createElement('button');
+        dot.className = 'h-1.5 rounded-full transition-all duration-300 bg-white/25 w-1.5';
+        dot.onclick = () => scrollToIndex(idx);
+        dot.title = item.title;
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    function updateWheelDots(activeIdx) {
+      const dots = document.querySelectorAll('#wheel-dots button');
+      dots.forEach((dot, idx) => {
+        if (idx === activeIdx) {
+          dot.className = 'h-1.5 w-5 rounded-full transition-all duration-300 bg-white';
+        } else {
+          dot.className = 'h-1.5 w-1.5 rounded-full transition-all duration-300 bg-white/25 hover:bg-white/50';
+        }
+      });
+    }
+
+    /**
+     * =====================================================================
+     * 10. SECONDARY VIEWS (ALL QR CODES GRID & DIRECTORY)
+     * =====================================================================
+     */
+    function renderAllSecondaryViews() {
+      renderAllQrGrid();
+      renderDirectoryList();
+      const dirPfp = document.getElementById('directory-pfp-img');
+      if (dirPfp) {
+        dirPfp.src = PROFILE_CONFIG.pfpUrl;
+        dirPfp.className = PROFILE_CONFIG.isCustomCrop ? 'samurai-avatar-custom' : 'samurai-avatar-crop';
+      }
+    }
+
+    function renderAllQrGrid() {
+      const grid = document.getElementById('all-qr-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      activeLinks.forEach((item, index) => {
+        const num = String(index + 1).padStart(2, '0');
+        const glyph = PLATFORM_GLYPHS[item.platform] || PLATFORM_GLYPHS.website;
+        const canvasId = `grid-qr-canvas-${index}`;
+
+        const card = document.createElement('div');
+        card.className = 'glass-dock rounded-2xl p-6 flex flex-col items-center text-center justify-between border border-white/10 hover:border-white/25 transition';
+
+        card.innerHTML = `
+          <div class="w-full flex items-center justify-between text-[10px] font-mono text-zinc-400 mb-4 pb-2.5 border-b border-white/10">
+            <span>N°${num} // ${escapeHtml(item.badge || item.platform.toUpperCase())}</span>
+            <span>${escapeHtml(item.year || '2026')}</span>
+          </div>
+
+          <!-- Machined Hardware QR Well -->
+          <div
+            onclick="openQRModal(${index})"
+            class="p-3 rounded-2xl bg-gradient-to-b from-[#22252E] to-[#0D0F13] border border-white/15 shadow-2xl cursor-pointer hover:scale-[1.02] transition-transform my-1"
+            title="Click to enlarge QR Code"
+          >
+            <div class="p-2.5 rounded-xl ${qrPaperContrastMode ? 'bg-[#EAE8E3]' : 'bg-[#0B0D11]'} border border-white/10">
+              <canvas id="${canvasId}" class="w-44 h-44 block rounded-lg"></canvas>
+            </div>
+          </div>
+
+          <div class="mt-4 mb-5">
+            <div class="flex items-center justify-center gap-2 text-white">
+              ${glyph}
+              <h3 class="text-xl font-semibold">${escapeHtml(item.title)}</h3>
+            </div>
+            <p class="text-xs font-mono text-zinc-400 mt-1">${escapeHtml(item.subtitle)}</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 w-full">
+            <button
+              onclick="copyText('${escapeJs(item.url)}', '${escapeJs(item.title)} Link Copied')"
+              class="portfolio-action-btn py-2 text-xs font-medium"
+            >
+              Copy Link
+            </button>
+            <button
+              onclick="downloadBrandedQR('${escapeJs(item.title)}', '${escapeJs(item.subtitle)}', '${escapeJs(item.url)}', 'pradhuman-${escapeJs(item.platform)}-qr.png')"
+              class="portfolio-action-btn py-2 text-xs font-medium text-sky-400"
+            >
+              Save PNG
+            </button>
+          </div>
+        `;
+
+        grid.appendChild(card);
+
+        const canvasEl = document.getElementById(canvasId);
+        if (canvasEl) {
+          drawPrecisionQR(canvasEl, item.url, {
+            size: 360,
+            paperMode: qrPaperContrastMode
+          });
+        }
+      });
+    }
+
+    function renderDirectoryList() {
+      const container = document.getElementById('directory-list-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      activeLinks.forEach((item, index) => {
+        const num = String(index + 1).padStart(2, '0');
+        const glyph = PLATFORM_GLYPHS[item.platform] || PLATFORM_GLYPHS.website;
+
+        const row = document.createElement('div');
+        row.className = 'glass-dock p-4 rounded-xl flex items-center justify-between gap-4 hover:border-white/25 transition';
+
+        row.innerHTML = `
+          <a
+            href="${escapeHtml(item.url)}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-4 flex-1 min-w-0"
+          >
+            <span class="text-xs font-mono text-zinc-500">N°${num}</span>
+            <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white shrink-0">
+              ${glyph}
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-semibold text-white truncate">${escapeHtml(item.title)}</h3>
+                <span class="portfolio-tag-pill hidden sm:inline-block">${escapeHtml(item.badge || '')}</span>
+              </div>
+              <p class="text-xs font-mono text-zinc-400 truncate mt-0.5">${escapeHtml(item.subtitle)}</p>
+            </div>
+          </a>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              onclick="copyText('${escapeJs(item.url)}', '${escapeJs(item.title)} Link Copied')"
+              class="portfolio-action-btn px-3 py-1.5 text-xs font-mono"
+            >
+              Copy
+            </button>
+            <button
+              onclick="openQRModal(${index})"
+              class="portfolio-action-btn px-3 py-1.5 text-xs font-mono text-sky-400"
+            >
+              QR
+            </button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+      const views = {
+        selector: document.getElementById('view-selector'),
+        qrcodes: document.getElementById('view-qrcodes'),
+        directory: document.getElementById('view-directory')
+      };
+      const navBtns = {
+        selector: document.getElementById('nav-selector'),
+        qrcodes: document.getElementById('nav-qrcodes'),
+        directory: document.getElementById('nav-directory')
+      };
+
+      Object.keys(views).forEach(k => {
+        if (k === mode) {
+          views[k].classList.remove('hidden');
+          navBtns[k].className = 'px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-white bg-white/10';
+        } else {
+          views[k].classList.add('hidden');
+          navBtns[k].className = 'px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-zinc-400 hover:text-zinc-100';
+        }
+      });
+
+      if (mode !== 'selector') {
+        renderAllSecondaryViews();
+      }
+    }
+
+    /**
+     * =====================================================================
+     * 11. QR MODALS & HIGH-RES PNG EXPORT
+     * =====================================================================
+     */
+    function openActiveQRModal() {
+      const activeIdx = wrapIndex(Math.round(wheelCurrent), activeLinks.length);
+      openQRModal(activeIdx);
+    }
+
+    function copyActiveLink() {
+      const activeIdx = wrapIndex(Math.round(wheelCurrent), activeLinks.length);
+      const item = activeLinks[activeIdx];
+      if (item) copyText(item.url, `${item.title} Link Copied`);
+    }
+
+    function openQRModal(index) {
+      const item = activeLinks[index];
+      if (!item) return;
+
+      const num = String(index + 1).padStart(2, '0');
+      document.getElementById('modal-index-tag').textContent = `N°${num} // ${item.badge || 'QR MATRIX'}`;
+      document.getElementById('modal-title').textContent = item.title;
+      document.getElementById('modal-subtitle').textContent = item.subtitle;
+      document.getElementById('modal-url-display').textContent = item.url;
+      document.getElementById('modal-open-link').href = item.url;
+
+      const qrCanvas = document.getElementById('modal-qr-canvas');
+      const qrWell = document.getElementById('modal-qr-well');
+      if (qrWell) {
+        qrWell.className = qrPaperContrastMode
+          ? 'p-3 rounded-xl bg-[#EAE8E3] border border-white/20'
+          : 'p-3 rounded-xl bg-[#0B0D11] border border-white/10';
+      }
+      if (qrCanvas) {
+        drawPrecisionQR(qrCanvas, item.url, {
+          size: 440,
+          paperMode: qrPaperContrastMode
+        });
+      }
+
+      document.getElementById('modal-copy-btn').onclick = () => {
+        copyText(item.url, `${item.title} Link Copied`);
+      };
+      document.getElementById('modal-download-btn').onclick = () => {
+        downloadBrandedQR(item.title, item.subtitle, item.url, `pradhuman-${item.platform}-qr.png`);
+      };
+
+      const modal = document.getElementById('qr-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeQRModal() {
+      const modal = document.getElementById('qr-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openPageQRModal() {
+      const modal = document.getElementById('page-qr-modal');
+      const input = document.getElementById('page-url-input');
+      const href = window.location.href;
+      if (!input.value) {
+        input.value = href.startsWith('http') ? href : PROFILE_CONFIG.defaultHubUrl;
+      }
+      updatePageQRCode(input.value);
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function updatePageQRCode(val) {
+      const canvas = document.getElementById('page-qr-canvas');
+      if (canvas) {
+        drawPrecisionQR(canvas, val || PROFILE_CONFIG.defaultHubUrl, {
+          size: 440,
+          paperMode: qrPaperContrastMode
+        });
+      }
+    }
+
+    function closePageQRModal() {
+      const modal = document.getElementById('page-qr-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function downloadBrandedQR(title, subtitle, url, filename) {
+      const exportCanvas = document.createElement('canvas');
+      const w = 800;
+      const h = 1000;
+      exportCanvas.width = w;
+      exportCanvas.height = h;
+      const ctx = exportCanvas.getContext('2d');
+
+      ctx.fillStyle = '#0B0C0F';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 100; x < w; x += 150) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 100; y < h; y += 150) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '500 20px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('PRADHUMAN // PORTFOLIO 2026', w / 2, 100);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '600 56px "Inter", sans-serif';
+      ctx.fillText(title, w / 2, 175);
+
+      ctx.fillStyle = '#38BDF8';
+      ctx.font = '400 24px "JetBrains Mono", monospace';
+      ctx.fillText(subtitle, w / 2, 220);
+
+      const boxSize = 520;
+      const boxX = (w - boxSize) / 2;
+      const boxY = 265;
+      ctx.fillStyle = '#12151C';
+      ctx.fillRect(boxX - 12, boxY - 12, boxSize + 24, boxSize + 24);
+
+      const tempQr = document.createElement('canvas');
+      drawPrecisionQR(tempQr, url, {
+        size: boxSize,
+        paperMode: qrPaperContrastMode
+      });
+      ctx.drawImage(tempQr, boxX, boxY, boxSize, boxSize);
+
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '400 20px "JetBrains Mono", monospace';
+      ctx.fillText(url.length > 48 ? url.slice(0, 48) + '...' : url, w / 2, 865);
+
+      const link = document.createElement('a');
+      link.download = filename || 'pradhuman-qr.png';
+      link.href = exportCanvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast(`Exported ${filename}`);
+    }
+
+    /**
+     * =====================================================================
+     * 12. COMMAND PALETTE (⌘K) & CUSTOMIZE EDITOR
+     * =====================================================================
+     */
+    function openCommandPalette() {
+      const modal = document.getElementById('cmd-modal');
+      const input = document.getElementById('cmd-search-input');
+      input.value = '';
+      renderCommandItems('');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closeCommandPalette() {
+      const modal = document.getElementById('cmd-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function renderCommandItems(query) {
+      const list = document.getElementById('cmd-items-list');
+      list.innerHTML = '';
+      const q = (query || '').toLowerCase().trim();
+
+      activeLinks.forEach((item, idx) => {
+        if (q && !item.title.toLowerCase().includes(q) && !item.subtitle.toLowerCase().includes(q)) return;
+
+        const row = document.createElement('div');
+        row.className = 'p-2.5 rounded-xl hover:bg-white/10 flex items-center justify-between cursor-pointer transition';
+        row.onclick = () => {
+          closeCommandPalette();
+          switchMode('selector');
+          scrollToIndex(idx);
+        };
+
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-mono text-zinc-500">N°0${idx + 1}</span>
+            <div>
+              <div class="text-xs font-medium text-white">${escapeHtml(item.title)}</div>
+              <div class="text-[11px] font-mono text-zinc-400">${escapeHtml(item.subtitle)}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button
+              onclick="event.stopPropagation(); closeCommandPalette(); openQRModal(${idx});"
+              class="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-[10px] font-mono text-sky-400"
+            >
+              Show QR
+            </button>
+            <a
+              href="${escapeHtml(item.url)}"
+              target="_blank"
+              rel="noopener noreferrer"
+              onclick="event.stopPropagation();"
+              class="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-[10px] font-mono text-zinc-200"
+            >
+              Open ↗
+            </a>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function triggerQuickPfpUpload() {
+      const input = document.getElementById('quick-pfp-upload');
+      if (input) input.click();
+    }
+
+    function handlePfpFileUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        savePfpToStorage(e.target.result, true);
+        updateWheelSlotContents(true);
+        renderAllSecondaryViews();
+        showToast('Samurai Avatar Updated');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function triggerCardScreenshotUpload(idx) {
+      pendingScreenshotCardIdx = idx;
+      const input = document.getElementById('custom-card-preview-upload');
+      if (input) input.click();
+    }
+
+    function handleCardScreenshotUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file || pendingScreenshotCardIdx < 0 || pendingScreenshotCardIdx >= activeLinks.length) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        activeLinks[pendingScreenshotCardIdx].customPreviewUrl = e.target.result;
+        saveLinksToStorage();
+        updateWheelSlotContents(true);
+        renderEditorLinksList();
+        showToast(`Updated ${activeLinks[pendingScreenshotCardIdx].title} Preview Screenshot`);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearCardScreenshot(idx) {
+      if (!activeLinks[idx]) return;
+      activeLinks[idx].customPreviewUrl = '';
+      saveLinksToStorage();
+      updateWheelSlotContents(true);
+      renderEditorLinksList();
+      showToast('Restored Built-In Live UI Preview');
+    }
+
+    function updatePfpFromUrl(urlVal) {
+      const trimmed = (urlVal || '').trim();
+      if (!trimmed) return;
+      savePfpToStorage(trimmed, trimmed !== DEFAULT_PFP_URL);
+      updateWheelSlotContents(true);
+      renderAllSecondaryViews();
+      showToast('Portrait URL Updated');
+    }
+
+    function resetDefaultPfp() {
+      localStorage.removeItem(PFP_STORAGE_KEY);
+      PROFILE_CONFIG.pfpUrl = DEFAULT_PFP_URL;
+      PROFILE_CONFIG.isCustomCrop = false;
+      updateWheelSlotContents(true);
+      renderAllSecondaryViews();
+      showToast('Restored Samurai Scroll PFP');
+    }
+
+    function handlePfpError(imgEl) {
+      imgEl.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'%3E%3Crect width='300' height='400' fill='%2318191C'/%3E%3Ctext x='150' y='215' text-anchor='middle' fill='%23E5E3DE' font-family='sans-serif' font-size='64' font-weight='bold'%3EPO%3C/text%3E%3C/svg%3E";
+    }
+
+    function openEditorModal() {
+      resetEditorForm();
+      renderEditorLinksList();
+      const modal = document.getElementById('editor-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEditorModal() {
+      const modal = document.getElementById('editor-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function applyPlatformPreset(platform) {
+      const editIdx = parseInt(document.getElementById('edit-link-index').value, 10);
+      if (editIdx !== -1) return;
+      const presets = {
+        github: { title: 'GitHub', badge: 'W/GITHUB' },
+        instagram: { title: 'Instagram', badge: 'W/INSTAGRAM' },
+        whatsapp: { title: 'WhatsApp', badge: 'W/WHATSAPP' },
+        linkedin: { title: 'LinkedIn', badge: 'W/LINKEDIN' },
+        twitter: { title: 'X / Twitter', badge: 'W/TWITTER' },
+        youtube: { title: 'YouTube', badge: 'W/YOUTUBE' },
+        website: { title: 'Portfolio', badge: 'W/WEBSITE' }
+      };
+      const p = presets[platform] || { title: 'Channel', badge: 'W/LINK' };
+      document.getElementById('input-title').value = p.title;
+      document.getElementById('input-badge').value = p.badge;
+    }
+
+    function addLinkedInPreset() {
+      const exists = activeLinks.some(l => l.platform === 'linkedin');
+      if (exists) {
+        showToast('LinkedIn is already on your wheel');
+        return;
+      }
+      activeLinks.push({
+        id: 'linkedin',
+        platform: 'linkedin',
+        title: 'LinkedIn',
+        subtitle: 'in/pradhuman-sharma-5208342b6',
+        url: 'https://www.linkedin.com/in/pradhuman-sharma-5208342b6',
+        badge: 'W/LINKEDIN',
+        year: '2026',
+        customPreviewUrl: ''
+      });
+      saveLinksToStorage();
+      renderWheelDots();
+      updateWheelSlotContents(true);
+      renderAllSecondaryViews();
+      renderEditorLinksList();
+      showToast('Added LinkedIn to Wheel');
+    }
+
+    function renderEditorLinksList() {
+      const list = document.getElementById('editor-links-list');
+      list.innerHTML = '';
+      activeLinks.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'p-3 rounded-xl bg-black/50 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2';
+        row.innerHTML = `
+          <div class="min-w-0">
+            <div class="text-xs font-semibold text-white truncate">
+              N°0${idx + 1} — ${escapeHtml(item.title)} <span class="text-zinc-400 font-normal">(${escapeHtml(item.subtitle)})</span>
+            </div>
+            <div class="text-[10px] font-mono text-zinc-500 truncate">${escapeHtml(item.url)}</div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0 text-[10px] font-mono flex-wrap">
+            <button type="button" onclick="triggerCardScreenshotUpload(${idx})" class="px-2 py-1 rounded border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10">
+              ${item.customPreviewUrl ? 'Change Screenshot' : 'Upload Screenshot'}
+            </button>
+            ${item.customPreviewUrl ? `<button type="button" onclick="clearCardScreenshot(${idx})" class="px-2 py-1 rounded border border-white/15 text-zinc-400">Reset UI</button>` : ''}
+            <button type="button" onclick="moveLink(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="px-2 py-1 rounded border border-white/10 text-zinc-300 disabled:opacity-25">↑</button>
+            <button type="button" onclick="moveLink(${idx}, 1)" ${idx === activeLinks.length - 1 ? 'disabled' : ''} class="px-2 py-1 rounded border border-white/10 text-zinc-300 disabled:opacity-25">↓</button>
+            <button type="button" onclick="startEditLink(${idx})" class="px-2.5 py-1 rounded border border-sky-500/40 text-sky-400">Edit</button>
+            <button type="button" onclick="deleteLink(${idx})" class="px-2.5 py-1 rounded border border-rose-500/40 text-rose-400">Del</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function handleSaveLink(event) {
+      event.preventDefault();
+      const editIdx = parseInt(document.getElementById('edit-link-index').value, 10);
+      const platform = document.getElementById('input-platform').value;
+      const title = document.getElementById('input-title').value.trim();
+      const subtitle = document.getElementById('input-subtitle').value.trim();
+      const url = document.getElementById('input-url').value.trim();
+      const badge = document.getElementById('input-badge').value.trim() || `W/${platform.toUpperCase()}`;
+
+      if (!title || !url) return;
+
+      const entry = {
+        id: `${platform}-${Date.now()}`,
+        platform,
+        title,
+        subtitle,
+        url,
+        badge: badge.toUpperCase(),
+        year: '2026',
+        customPreviewUrl: editIdx >= 0 && activeLinks[editIdx] ? activeLinks[editIdx].customPreviewUrl : ''
+      };
+
+      if (editIdx >= 0 && editIdx < activeLinks.length) {
+        activeLinks[editIdx] = entry;
+        showToast('Wheel Channel Updated');
+      } else {
+        activeLinks.push(entry);
+        showToast('Added Channel to Wheel');
+      }
+
+      saveLinksToStorage();
+      renderWheelDots();
+      updateWheelSlotContents(true);
+      renderAllSecondaryViews();
+      renderEditorLinksList();
+      resetEditorForm();
+    }
+
+    function startEditLink(idx) {
+      const item = activeLinks[idx];
+      if (!item) return;
+      document.getElementById('edit-link-index').value = idx;
+      document.getElementById('input-platform').value = item.platform || 'website';
+      document.getElementById('input-title').value = item.title;
+      document.getElementById('input-subtitle').value = item.subtitle;
+      document.getElementById('input-url').value = item.url;
+      document.getElementById('input-badge').value = item.badge || '';
+      document.getElementById('form-mode-title').textContent = `02 // Editing: ${item.title}`;
+      document.getElementById('submit-link-btn').textContent = 'Update Channel';
+      document.getElementById('cancel-edit-btn').classList.remove('hidden');
+    }
+
+    function resetEditorForm() {
+      document.getElementById('edit-link-index').value = '-1';
+      document.getElementById('input-platform').value = 'github';
+      document.getElementById('input-title').value = '';
+      document.getElementById('input-subtitle').value = '';
+      document.getElementById('input-url').value = '';
+      document.getElementById('input-badge').value = '';
+      document.getElementById('form-mode-title').textContent = '02 // + Add Social Destination to Wheel';
+      document.getElementById('submit-link-btn').textContent = 'Save to Wheel';
+      document.getElementById('cancel-edit-btn').classList.add('hidden');
+    }
+
+    function moveLink(idx, dir) {
+      const target = idx + dir;
+      if (target < 0 || target >= activeLinks.length) return;
+      const tmp = activeLinks[idx];
+      activeLinks[idx] = activeLinks[target];
+      activeLinks[target] = tmp;
+      saveLinksToStorage();
+      updateWheelSlotContents(true);
+      renderAllSecondaryViews();
+      renderEditorLinksList();
+    }
+
+    function deleteLink(idx) {
+      if (activeLinks.length <= 1) {
+        showToast('At least 1 channel is required');
+        return;
+      }
+      activeLinks.splice(idx, 1);
+      saveLinksToStorage();
+      renderWheelDots();
+      updateWheelSlotContents(true);
+      renderAllSecondaryViews();
+      renderEditorLinksList();
+      showToast('Channel Removed');
+    }
+
+    function resetToDefaultLinks() {
+      localStorage.removeItem(LINKS_STORAGE_KEY);
+      activeLinks = JSON.parse(JSON.stringify(LINKS));
+      renderWheelDots();
+      updateWheelSlotContents(true);
+      renderAllSecondaryViews();
+      renderEditorLinksList();
+      showToast('Restored Default 3 Channels');
+    }
+
+    function copyUpdatedLinksCode() {
+      copyText(`const LINKS = ${JSON.stringify(activeLinks, null, 2)};`, 'LINKS JSON Copied');
+    }
+
+    function downloadUpdatedHTMLFile() {
+      let html = document.documentElement.outerHTML;
+      html = html.replace(/const LINKS = \[[\s\S]*?\];/, `const LINKS = ${JSON.stringify(activeLinks, null, 6)};`);
+      html = html.replace(/let PROFILE_CONFIG = \{[\s\S]*?\};/, `let PROFILE_CONFIG = ${JSON.stringify(PROFILE_CONFIG, null, 6)};`);
+      const blob = new Blob(['<!DOCTYPE html>\n' + html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'index.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Downloaded Updated index.html');
+    }
+
+    /**
+     * =====================================================================
+     * 13. LIVE IST CLOCK, VCARD & GLOBAL SHORTCUTS
+     * =====================================================================
+     */
+    function updateTelemetryClock() {
+      const el = document.getElementById('telemetry-clock');
+      if (!el) return;
+      try {
+        const now = new Date();
+        const fmt = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Asia/Kolkata',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+        el.textContent = fmt.format(now);
+      } catch (e) {}
+    }
+
+    function downloadVCard() {
+      const urls = activeLinks.map((l, i) => `ITEM${i + 1}.URL:${l.url}\nITEM${i + 1}.X-ABLabel:${l.title}`).join('\n');
+      const vcf = [
+        'BEGIN:VCARD',
+        'VERSION:3.0',
+        `FN:${PROFILE_CONFIG.name}`,
+        `TEL;TYPE=CELL:${PROFILE_CONFIG.phone}`,
+        urls,
+        'END:VCARD'
+      ].join('\n');
+      const blob = new Blob([vcf], { type: 'text/vcard' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Pradhuman.vcf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Saved Pradhuman.vcf');
+    }
+
+    function copyText(text, msg = 'Copied to clipboard') {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast(msg);
+      } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-2');
+      }, 2200);
+    }
+
+    function isAnyModalOpen() {
+      return ['qr-modal', 'page-qr-modal', 'cmd-modal', 'editor-modal'].some(id => {
+        const el = document.getElementById(id);
+        return el && !el.classList.contains('hidden');
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function escapeJs(str) {
+      return String(str || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeQRModal();
+        closePageQRModal();
+        closeCommandPalette();
+        closeEditorModal();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        openCommandPalette();
+      }
+      if (!isAnyModalOpen() && currentMode === 'selector') {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          stepWheel(1);
+        } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          stepWheel(-1);
+        }
+      }
+    });
+
+    ['qr-modal', 'page-qr-modal', 'cmd-modal', 'editor-modal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('click', e => {
+          if (e.target === el) {
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+          }
+        });
+      }
+    });
+
+    // Boot Application on Load
+    window.onload = function () {
+      loadState();
+      initStarfieldCanvas();
+      buildWheelDOM();
+      initWheelInteractions();
+      updateTelemetryClock();
+      setInterval(updateTelemetryClock, 1000);
+      requestAnimationFrame(animateMainLoop);
+    };
+  </script>
+</body>
+</html>

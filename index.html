@@ -304,6 +304,12 @@
     }
 
     @media (max-width: 767px) {
+      html, body {
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100% !important;
+        -webkit-overflow-scrolling: touch;
+      }
       .preview-window-card {
         width: 308px;
         height: 193px;
@@ -364,6 +370,16 @@
       background: rgba(255, 255, 255, 0.15);
       border-radius: 9999px;
     }
+    .mobile-link-card {
+      background: #FFFFFF;
+      border-radius: 18px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mobile-link-card:active {
+      transform: scale(0.985);
+      background: #F8FAFC;
+    }
   </style>
 </head>
 <body class="relative select-none">
@@ -398,7 +414,43 @@
   <!-- 2. TOP MICRO-TELEMETRY BAR & FLOATING HEADER NAVIGATION               -->
   <!-- ===================================================================== -->
   <header class="fixed top-0 left-0 right-0 z-30 pointer-events-none">
-    <!-- Top-Left Micro Telemetry -->
+    <!-- Dedicated Mobile Top Bar (Matching Screenshot: Asterisk on left, Share on right) -->
+    <div class="flex md:hidden items-center justify-between px-4 pt-3.5 pb-2">
+      <!-- Left: Asterisk Button (Linktree style, opens Master Hub / Hoodie QR Modal) -->
+      <button
+        type="button"
+        onclick="openPageQRModal()"
+        class="pointer-events-auto w-10 h-10 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/25 active:scale-95 transition shadow-lg"
+        title="Master Portfolio QR Code"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18M5.636 5.636l12.728 12.728M5.636 18.364L18.364 5.636" />
+        </svg>
+      </button>
+
+      <!-- Center: Switch view pill (Links / QRs / Hub) -->
+      <div class="pointer-events-auto flex items-center gap-1 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-2 py-1 text-[11px] font-mono">
+        <button id="mobile-nav-selector" type="button" onclick="switchMode('selector')" class="px-2.5 py-1 rounded-full text-white bg-white/20 font-medium">Links</button>
+        <button id="mobile-nav-qrcodes" type="button" onclick="switchMode('qrcodes')" class="px-2.5 py-1 rounded-full text-zinc-400 hover:text-white">QRs</button>
+        <button id="mobile-nav-directory" type="button" onclick="switchMode('directory')" class="px-2.5 py-1 rounded-full text-zinc-400 hover:text-white">Hub</button>
+      </div>
+
+      <!-- Right: Share Button (Matching Screenshot: Tray with up arrow) -->
+      <button
+        type="button"
+        onclick="sharePortfolio()"
+        class="pointer-events-auto w-10 h-10 rounded-full bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/25 active:scale-95 transition shadow-lg"
+        title="Share Portfolio"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15M12 3v12m0-12l3.75 3.75M12 3L8.25 6.75" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Desktop Micro-Telemetry & Floating Header Row -->
+    <div class="hidden md:block">
+      <!-- Top-Left Micro Telemetry -->
     <div class="px-3 sm:px-5 pt-1.5 flex items-center justify-between text-[9px] font-mono tracking-wider text-zinc-500 uppercase">
       <div class="flex items-center gap-3 sm:gap-4 bg-black/35 px-2.5 py-0.5 rounded backdrop-blur-sm border border-white/[0.04]">
         <span>IST <strong id="telemetry-clock" class="text-zinc-300 font-normal">12:23</strong> GMT+5:30</span>
@@ -510,6 +562,7 @@
         </div>
       </div>
     </div>
+    </div>
   </header>
 
   <!-- ===================================================================== -->
@@ -517,7 +570,7 @@
   <!-- ===================================================================== -->
   <main
     id="view-selector"
-    class="relative z-10 w-full h-screen overflow-hidden flex items-center justify-center wheel-stage"
+    class="relative z-10 w-full h-screen overflow-hidden hidden md:flex items-center justify-center wheel-stage"
   >
     <!-- LEFT ARC WHEEL CONTAINER (Live Destination Page Previews: GitHub, IG, WhatsApp) -->
     <div
@@ -607,7 +660,7 @@
     </div>
 
     <!-- Bottom Wheel Scroll Indicator & Quick Stepper Controls -->
-    <div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 pointer-events-auto">
+    <div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 hidden md:flex items-center gap-3 pointer-events-auto">
       <button
         onclick="stepWheel(-1)"
         class="glass-dock w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white transition"
@@ -632,6 +685,171 @@
       </button>
     </div>
   </main>
+
+  <!-- ===================================================================== -->
+  <!-- 3M. MOBILE DEDICATED VIEW: LINKTREE CARDS & BIO (SCREENSHOT MATCH)    -->
+  <!-- ===================================================================== -->
+  <section
+    id="view-mobile"
+    class="relative z-20 block md:hidden w-full min-h-screen pt-20 pb-20 px-4 sm:px-6 overflow-y-auto select-text"
+  >
+    <div class="max-w-md mx-auto flex flex-col items-center">
+      <!-- Centered Avatar (Samurai Portrait) -->
+      <div class="relative w-24 h-24 rounded-full overflow-hidden border-2 border-white/30 shadow-2xl mb-3 bg-zinc-900 flex-shrink-0">
+        <img
+          id="mobile-pfp-img"
+          src="https://i.ytimg.com/vi/kW4Udb4-jcU/hqdefault.jpg"
+          alt="Pradhuman"
+          class="samurai-avatar-crop w-full h-full object-cover"
+        />
+      </div>
+
+      <!-- Full Name -->
+      <h1 class="text-2xl font-bold text-white text-center tracking-tight">
+        Pradhuman
+      </h1>
+
+      <!-- Subtitle / Bio -->
+      <p class="text-xs text-white/80 text-center font-normal mt-1 max-w-xs leading-relaxed">
+        Software × AI × Mechanical Engineer · C++ Game Engines · AI-developer
+      </p>
+
+      <!-- Horizontal Social Icons Row -->
+      <div class="flex items-center justify-center gap-5 mt-3.5 mb-6">
+        <!-- Instagram -->
+        <a
+          href="https://www.instagram.com/just__pradhuman"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-white hover:text-white/80 active:scale-90 transition p-1"
+          title="Instagram"
+        >
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+          </svg>
+        </a>
+
+        <!-- WhatsApp -->
+        <a
+          href="https://wa.me/919625935401"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-white hover:text-white/80 active:scale-90 transition p-1"
+          title="WhatsApp"
+        >
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12 0 2.124.556 4.119 1.528 5.847l-1.528 5.581 5.714-1.499c1.682.912 3.61 1.435 5.664 1.435 6.627 0 12-5.373 12-12s-5.373-12-11.378-11.364z"/>
+          </svg>
+        </a>
+
+        <!-- GitHub -->
+        <a
+          href="https://github.com/dev-pradhuman"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-white hover:text-white/80 active:scale-90 transition p-1"
+          title="GitHub"
+        >
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+        </a>
+
+        <!-- LinkedIn -->
+        <a
+          href="https://www.linkedin.com/in/pradhuman-sharma-5208342b6"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-white hover:text-white/80 active:scale-90 transition p-1"
+          title="LinkedIn"
+        >
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Vertical Stack of Clean White Link Cards (Matching Screenshot) -->
+      <div id="mobile-links-container" class="w-full space-y-3.5">
+        <!-- Rendered dynamically by renderMobileLinks() -->
+      </div>
+
+      <!-- Scan Hoodie / Master QR Button -->
+      <button
+        type="button"
+        onclick="openPageQRModal()"
+        class="w-full mt-5 py-3.5 px-4 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-98 border border-white/20 text-white font-mono text-xs flex items-center justify-center gap-2.5 transition shadow-lg"
+      >
+        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+        </svg>
+        <span>Open Hoodie & Master QR Code</span>
+      </button>
+
+      <!-- Footer Micro Readout -->
+      <div class="text-[11px] font-mono text-center text-white/40 mt-6 mb-8">
+        PRADHUMAN · 2026
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile 3-Dots Options Action Sheet Modal -->
+  <div
+    id="mobile-options-modal"
+    class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity"
+    onclick="closeMobileOptionsModal(event)"
+  >
+    <div
+      class="w-full sm:max-w-md bg-zinc-900 border border-white/10 rounded-t-3xl sm:rounded-2xl p-6 text-white shadow-2xl space-y-4"
+      onclick="event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div class="flex items-center gap-3">
+          <div id="mobile-opt-thumb" class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white/10"></div>
+          <div>
+            <h3 id="mobile-opt-title" class="font-bold text-base text-white">Title</h3>
+            <p id="mobile-opt-url" class="text-xs text-zinc-400 truncate max-w-[200px]">url</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeMobileOptionsModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="space-y-2 pt-1 font-mono text-xs">
+        <button
+          type="button"
+          onclick="openLinkFromMobileOptions()"
+          class="w-full py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-between text-left transition"
+        >
+          <span>Open Link in New Tab</span>
+          <span>↗</span>
+        </button>
+        <button
+          type="button"
+          onclick="showQrFromMobileOptions()"
+          class="w-full py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-between text-left transition"
+        >
+          <span>View QR Code Matrix</span>
+          <span>⊞</span>
+        </button>
+        <button
+          type="button"
+          onclick="copyFromMobileOptions()"
+          class="w-full py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 flex items-center justify-between text-left transition"
+        >
+          <span>Copy URL</span>
+          <span>📋</span>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onclick="closeMobileOptionsModal()"
+        class="w-full py-3 rounded-xl bg-zinc-800 text-zinc-300 font-medium text-xs hover:bg-zinc-700 transition"
+      >
+        Done
+      </button>
+    </div>
+  </div>
 
   <!-- ===================================================================== -->
   <!-- 3B. SECONDARY VIEW: ALL QR CODES HUB (SIDE-BY-SIDE SCANNABLE GRID)    -->
@@ -1132,6 +1350,16 @@
         badge: 'W/WHATSAPP',
         year: '2026',
         customPreviewUrl: ''
+      },
+      {
+        id: 'linkedin',
+        platform: 'linkedin',
+        title: 'LinkedIn',
+        subtitle: 'Pradhuman Sharma',
+        url: 'https://www.linkedin.com/in/pradhuman-sharma-5208342b6',
+        badge: 'W/LINKEDIN',
+        year: '2026',
+        customPreviewUrl: ''
       }
     ];
 
@@ -1185,6 +1413,9 @@
 
       if (!activeLinks.length) {
         activeLinks = JSON.parse(JSON.stringify(LINKS));
+      } else if (!activeLinks.some(l => l.id === 'linkedin')) {
+        const li = LINKS.find(l => l.id === 'linkedin');
+        if (li) activeLinks.push(li);
       }
 
       try {
@@ -2369,10 +2600,16 @@
     function renderAllSecondaryViews() {
       renderAllQrGrid();
       renderDirectoryList();
+      renderMobileLinks();
       const dirPfp = document.getElementById('directory-pfp-img');
       if (dirPfp) {
         dirPfp.src = PROFILE_CONFIG.pfpUrl;
         dirPfp.className = PROFILE_CONFIG.isCustomCrop ? 'samurai-avatar-custom' : 'samurai-avatar-crop';
+      }
+      const mobPfp = document.getElementById('mobile-pfp-img');
+      if (mobPfp) {
+        mobPfp.src = PROFILE_CONFIG.pfpUrl;
+        mobPfp.className = PROFILE_CONFIG.isCustomCrop ? 'samurai-avatar-custom' : 'samurai-avatar-crop';
       }
     }
 
@@ -2507,12 +2744,44 @@
       };
 
       Object.keys(views).forEach(k => {
-        if (k === mode) {
-          views[k].classList.remove('hidden');
-          navBtns[k].className = 'px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-white bg-white/10';
+        if (views[k]) {
+          if (k === mode) {
+            views[k].classList.remove('hidden');
+            if (k === 'selector') {
+              views[k].classList.add('hidden', 'md:flex');
+            }
+            if (navBtns[k]) navBtns[k].className = 'px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-white bg-white/10';
+          } else {
+            views[k].classList.add('hidden');
+            if (k === 'selector') views[k].classList.remove('md:flex');
+            if (navBtns[k]) navBtns[k].className = 'px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-zinc-400 hover:text-zinc-100';
+          }
+        }
+      });
+
+      const mobileView = document.getElementById('view-mobile');
+      if (mobileView) {
+        if (mode === 'selector') {
+          mobileView.classList.remove('hidden');
+          mobileView.classList.add('block', 'md:hidden');
         } else {
-          views[k].classList.add('hidden');
-          navBtns[k].className = 'px-2.5 sm:px-3.5 py-1.5 rounded-lg font-medium transition-all text-zinc-400 hover:text-zinc-100';
+          mobileView.classList.add('hidden');
+          mobileView.classList.remove('block');
+        }
+      }
+
+      const mobileNavBtns = {
+        selector: document.getElementById('mobile-nav-selector'),
+        qrcodes: document.getElementById('mobile-nav-qrcodes'),
+        directory: document.getElementById('mobile-nav-directory')
+      };
+      Object.keys(mobileNavBtns).forEach(k => {
+        if (mobileNavBtns[k]) {
+          if (k === mode) {
+            mobileNavBtns[k].className = 'px-2.5 py-1 rounded-full text-white bg-white/20 font-medium';
+          } else {
+            mobileNavBtns[k].className = 'px-2.5 py-1 rounded-full text-zinc-400 hover:text-white';
+          }
         }
       });
 
@@ -3127,12 +3396,155 @@
       }
     });
 
+    /**
+     * =====================================================================
+     * 10M. DEDICATED LINKTREE MOBILE LAYOUT ENGINE & HANDLERS
+     * =====================================================================
+     */
+    let selectedMobileOptionIndex = -1;
+
+    function renderMobileLinks() {
+      const container = document.getElementById('mobile-links-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const pfpImg = document.getElementById('mobile-pfp-img');
+      if (pfpImg) {
+        pfpImg.src = PROFILE_CONFIG.pfpUrl;
+        pfpImg.className = PROFILE_CONFIG.isCustomCrop ? 'samurai-avatar-custom' : 'samurai-avatar-crop';
+      }
+
+      const PLATFORM_THUMB_STYLES = {
+        github: { bg: 'bg-zinc-900', color: 'text-white' },
+        instagram: { bg: 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600', color: 'text-white' },
+        whatsapp: { bg: 'bg-[#25D366]', color: 'text-white' },
+        linkedin: { bg: 'bg-[#0A66C2]', color: 'text-white' },
+        spotify: { bg: 'bg-[#1DB954]', color: 'text-white' },
+        twitter: { bg: 'bg-black', color: 'text-white' },
+        youtube: { bg: 'bg-[#FF0000]', color: 'text-white' },
+        website: { bg: 'bg-slate-800', color: 'text-white' }
+      };
+
+      activeLinks.forEach((item, index) => {
+        const style = PLATFORM_THUMB_STYLES[item.platform] || PLATFORM_THUMB_STYLES.website;
+        const glyph = PLATFORM_GLYPHS[item.platform] || PLATFORM_GLYPHS.website;
+
+        let thumbHtml = '';
+        if (item.customPreviewUrl) {
+          thumbHtml = `<img src="${escapeHtml(item.customPreviewUrl)}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover">`;
+        } else {
+          thumbHtml = `<div class="w-full h-full flex items-center justify-center ${style.bg} ${style.color}">${glyph}</div>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'mobile-link-card p-3 sm:p-3.5 flex items-center justify-between cursor-pointer select-none';
+        card.onclick = () => window.open(item.url, '_blank', 'noopener,noreferrer');
+
+        card.innerHTML = `
+          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-black/5">
+            ${thumbHtml}
+          </div>
+          <span class="text-base sm:text-lg font-bold text-slate-900 tracking-tight text-center flex-1 px-3 truncate">
+            ${escapeHtml(item.title)}
+          </span>
+          <button
+            type="button"
+            onclick="event.stopPropagation(); openMobileOptionsModal(${index})"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 active:scale-90 transition flex-shrink-0"
+            title="Options"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function openMobileOptionsModal(index) {
+      selectedMobileOptionIndex = index;
+      const item = activeLinks[index];
+      if (!item) return;
+
+      const modal = document.getElementById('mobile-options-modal');
+      const thumb = document.getElementById('mobile-opt-thumb');
+      const title = document.getElementById('mobile-opt-title');
+      const url = document.getElementById('mobile-opt-url');
+
+      title.textContent = item.title;
+      url.textContent = item.url;
+
+      const glyph = PLATFORM_GLYPHS[item.platform] || PLATFORM_GLYPHS.website;
+      if (item.customPreviewUrl) {
+        thumb.innerHTML = `<img src="${escapeHtml(item.customPreviewUrl)}" class="w-full h-full object-cover">`;
+      } else {
+        const style = (item.platform === 'github') ? 'bg-zinc-900' :
+                      (item.platform === 'instagram') ? 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600' :
+                      (item.platform === 'whatsapp') ? 'bg-[#25D366]' :
+                      (item.platform === 'linkedin') ? 'bg-[#0A66C2]' : 'bg-zinc-800';
+        thumb.innerHTML = `<div class="w-full h-full flex items-center justify-center ${style} text-white">${glyph}</div>`;
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeMobileOptionsModal(e) {
+      if (e && e.target && e.target.id !== 'mobile-options-modal' && !e.target.closest('button')) {
+        return;
+      }
+      const modal = document.getElementById('mobile-options-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function openLinkFromMobileOptions() {
+      if (selectedMobileOptionIndex >= 0 && selectedMobileOptionIndex < activeLinks.length) {
+        const item = activeLinks[selectedMobileOptionIndex];
+        window.open(item.url, '_blank', 'noopener,noreferrer');
+      }
+      closeMobileOptionsModal();
+    }
+
+    function showQrFromMobileOptions() {
+      const idx = selectedMobileOptionIndex;
+      closeMobileOptionsModal();
+      if (idx >= 0 && idx < activeLinks.length) {
+        openQRModal(idx);
+      }
+    }
+
+    function copyFromMobileOptions() {
+      if (selectedMobileOptionIndex >= 0 && selectedMobileOptionIndex < activeLinks.length) {
+        const item = activeLinks[selectedMobileOptionIndex];
+        copyText(item.url, `${item.title} Link Copied`);
+      }
+      closeMobileOptionsModal();
+    }
+
+    function sharePortfolio() {
+      const shareData = {
+        title: 'Pradhuman — Portfolio Links & QR Matrix',
+        text: 'Connect with Pradhuman: Software × AI × Mechanical Engineer',
+        url: window.location.href
+      };
+      if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+      } else {
+        copyText(window.location.href, 'Portfolio Link Copied');
+      }
+    }
+
     // Boot Application on Load
     window.onload = function () {
       loadState();
       initStarfieldCanvas();
       buildWheelDOM();
       initWheelInteractions();
+      renderMobileLinks();
       updateTelemetryClock();
       setInterval(updateTelemetryClock, 1000);
       requestAnimationFrame(animateMainLoop);

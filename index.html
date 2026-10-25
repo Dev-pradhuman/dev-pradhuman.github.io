@@ -371,14 +371,18 @@
       border-radius: 9999px;
     }
     .mobile-link-card {
-      background: #FFFFFF;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 18px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .mobile-link-card:active {
       transform: scale(0.985);
-      background: #F8FAFC;
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.35);
     }
   </style>
 </head>
@@ -774,17 +778,7 @@
         <!-- Rendered dynamically by renderMobileLinks() -->
       </div>
 
-      <!-- Scan Hoodie / Master QR Button -->
-      <button
-        type="button"
-        onclick="openPageQRModal()"
-        class="w-full mt-5 py-3.5 px-4 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-98 border border-white/20 text-white font-mono text-xs flex items-center justify-center gap-2.5 transition shadow-lg"
-      >
-        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-        </svg>
-        <span>Open Hoodie & Master QR Code</span>
-      </button>
+
 
       <!-- Footer Micro Readout -->
       <div class="text-[11px] font-mono text-center text-white/40 mt-6 mb-8">
@@ -3441,16 +3435,16 @@
         card.onclick = () => window.open(item.url, '_blank', 'noopener,noreferrer');
 
         card.innerHTML = `
-          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-black/5">
+          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-white/15">
             ${thumbHtml}
           </div>
-          <span class="text-base sm:text-lg font-bold text-slate-900 tracking-tight text-center flex-1 px-3 truncate">
+          <span class="text-base sm:text-lg font-semibold text-white tracking-tight text-center flex-1 px-3 truncate">
             ${escapeHtml(item.title)}
           </span>
           <button
             type="button"
             onclick="event.stopPropagation(); openMobileOptionsModal(${index})"
-            class="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 active:scale-90 transition flex-shrink-0"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 active:scale-90 transition flex-shrink-0"
             title="Options"
           >
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

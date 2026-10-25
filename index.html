@@ -122,7 +122,7 @@
     }
 
     /* Fine Analog Film Grain */
-    .film-grain {
+    .film-grain { display: none;
       position: fixed;
       inset: 0;
       z-index: 2;
@@ -2169,7 +2169,7 @@
 
       // 3. Smooth Lerp Interpolation toward wheelTarget
       const diff = wheelTarget - wheelCurrent;
-      wheelCurrent += diff * 0.11;
+      wheelCurrent += diff * 0.22;
 
       const currentRounded = Math.round(wheelCurrent);
       if (currentRounded !== lastActiveIndex) {
@@ -2288,7 +2288,7 @@
             const snapped = Math.round(wheelTarget);
             if (snapped !== Math.round(wheelCurrent)) playWheelTick();
             wheelTarget = snapped;
-          }, 140);
+          }, 90);
         },
         { passive: false }
       );
